@@ -28,8 +28,8 @@ const SportPage: React.FC = () => {
   const handleEventClick = (event: any) => {
     trackEventSelected(event.id, event.homeTeam, event.awayTeam, event.sportId);
   };
-  return <div className="bg-gray-900 min-h-screen text-white">
-      <div className="bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-800 p-4">
+  return <div className="bg-[#13294B] min-h-screen text-white">
+      <div className="bg-gradient-to-r from-[#1B3B6F] to-[#13294B] border-b border-[#13294B] p-4">
         <div className="flex items-center text-sm text-gray-400 mb-4">
           <Link to="/" className="hover:text-white flex items-center">
             <HomeIcon size={14} className="mr-1" />
@@ -48,30 +48,30 @@ const SportPage: React.FC = () => {
           <div className={`w-8 h-8 ${sport.bgColor} rounded-full flex items-center justify-center mr-3`}>
             {typeof sport.icon === 'string' ? sport.icon : sport.icon}
           </div>
-          <h1 className="text-2xl font-bold text-green-400">AFL Womens.</h1>
+          <h1 className="text-2xl font-bold text-[#50E3C2]">AFL Womens.</h1>
         </div>
       </div>
       <div className="p-4">
-        <div className="bg-gray-800 rounded-lg overflow-hidden">
-          <div className="flex border-b border-gray-700">
-            <div className="flex-1 border-r border-gray-700">
+        <div className="bg-[#1B3B6F] rounded-lg overflow-hidden">
+          <div className="flex border-b border-[#13294B]">
+            <div className="flex-1 border-r border-[#13294B]">
               <div className="p-4">
                 <div className="flex justify-between items-center mb-2">
                   <h2 className="font-semibold">Australia</h2>
-                  <div className="bg-gray-700 text-xs rounded px-1">2</div>
+                  <div className="bg-[#2A4E8D] text-xs rounded px-1">2</div>
                 </div>
                 <ul className="space-y-1">
-                  <li className="hover:bg-gray-700 rounded p-2">
+                  <li className="hover:bg-[#2A4E8D] rounded p-2">
                     <a href="#" className="block text-sm">
                       All Australia
                     </a>
                   </li>
-                  <li className="hover:bg-gray-700 rounded p-2">
+                  <li className="hover:bg-[#2A4E8D] rounded p-2">
                     <a href="#" className="block text-sm">
                       AFL
                     </a>
                   </li>
-                  <li className="bg-gray-700 rounded p-2 border-l-2 border-green-400">
+                  <li className="bg-[#2A4E8D] rounded p-2 border-l-2 border-[#50E3C2]">
                     <a href="#" className="block text-sm">
                       AFL Womens
                     </a>
@@ -80,23 +80,23 @@ const SportPage: React.FC = () => {
               </div>
             </div>
             <div className="flex-[3]">
-              <div className="flex border-b border-gray-700">
-                <button className="flex-1 p-3 text-center font-medium border-b-2 border-pink-500">
+              <div className="flex border-b border-[#13294B]">
+                <button className="flex-1 p-3 text-center font-medium border-b-2 border-[#4F44E0]">
                   Matches
                 </button>
                 <button className="flex-1 p-3 text-center font-medium text-gray-400">
                   Futures
                 </button>
               </div>
-              <div className="divide-y divide-gray-700">
+              <div className="divide-y divide-[#13294B]">
                 {events.map(event => <div key={event.id} className="p-4">
                     <div className="flex justify-between items-center mb-3">
-                      <Link to={`/event/${event.id}`} className="text-sm font-medium hover:text-pink-500" onClick={() => handleEventClick(event)}>
+                      <Link to={`/event/${event.id}`} className="text-sm font-medium hover:text-[#9B7BFD]" onClick={() => handleEventClick(event)}>
                         {event.homeTeam} v {event.awayTeam}
                       </Link>
                       <div className="flex items-center">
                         <div className="flex items-center mr-2 text-xs text-gray-400">
-                          <div className="w-4 h-4 bg-gray-700 rounded-full flex items-center justify-center mr-1">
+                          <div className="w-4 h-4 bg-[#2A4E8D] rounded-full flex items-center justify-center mr-1">
                             🏉
                           </div>
                           <span>{event.markets} markets</span>
@@ -116,7 +116,7 @@ const SportPage: React.FC = () => {
                           <span className="text-xs">SYD</span>
                         </div>
                         <div className="flex-1">{event.homeTeam}</div>
-                        <Link to={`/event/${event.id}`} className={`py-1 px-3 rounded ${event.id === 'w1' ? 'bg-pink-600' : 'bg-gray-700'}`} onClick={() => handleEventClick(event)}>
+                        <Link to={`/event/${event.id}`} className={`py-1 px-3 rounded ${event.id === 'w1' ? 'bg-[#4F44E0]' : 'bg-[#2A4E8D]'}`} onClick={() => handleEventClick(event)}>
                           {event.odds.home.toFixed(2)}
                         </Link>
                       </div>
@@ -125,7 +125,7 @@ const SportPage: React.FC = () => {
                           <span className="text-xs">RIC</span>
                         </div>
                         <div className="flex-1">{event.awayTeam}</div>
-                        <Link to={`/event/${event.id}`} className="py-1 px-3 rounded bg-gray-700" onClick={() => handleEventClick(event)}>
+                        <Link to={`/event/${event.id}`} className="py-1 px-3 rounded bg-[#2A4E8D]" onClick={() => handleEventClick(event)}>
                           {event.odds.away.toFixed(2)}
                         </Link>
                       </div>

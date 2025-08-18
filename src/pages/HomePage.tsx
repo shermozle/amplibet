@@ -9,7 +9,7 @@ const HomePage: React.FC = () => {
     // Track page view when component mounts
     trackPageView('Home');
   }, []);
-  return <div className="bg-gray-900 min-h-screen text-white p-4">
+  return <div className="bg-[#13294B] min-h-screen text-white p-4">
       <FeaturedEvents />
       <PopularNow />
       <UpcomingRacing />
