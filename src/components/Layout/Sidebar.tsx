@@ -1,0 +1,84 @@
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { HomeIcon, FlagIcon, GamepadIcon, ShoppingBagIcon, InfoIcon, PhoneIcon, DownloadIcon } from 'lucide-react';
+import { mockSports } from '../../utils/mockData';
+const Sidebar: React.FC = () => {
+  const location = useLocation();
+  return <aside className="w-48 bg-gray-800 text-white flex flex-col">
+      <nav className="flex-1">
+        <ul>
+          <li>
+            <Link to="/" className={`flex items-center px-4 py-3 hover:bg-gray-700 ${location.pathname === '/' ? 'border-l-4 border-pink-500' : ''}`}>
+              <HomeIcon size={18} className="mr-2" />
+              <span>Home</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/sport/racing" className={`flex items-center px-4 py-3 hover:bg-gray-700 ${location.pathname.includes('/sport/racing') ? 'border-l-4 border-pink-500' : ''}`}>
+              <FlagIcon size={18} className="mr-2" />
+              <span>Racing</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/sport/sport" className={`flex items-center px-4 py-3 hover:bg-gray-700 ${location.pathname.includes('/sport/sport') ? 'border-l-4 border-pink-500' : ''}`}>
+              <FlagIcon size={18} className="mr-2" />
+              <span>Sport</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/sport/esports" className={`flex items-center px-4 py-3 hover:bg-gray-700 ${location.pathname.includes('/sport/esports') ? 'border-l-4 border-pink-500' : ''}`}>
+              <GamepadIcon size={18} className="mr-2" />
+              <span>Esports</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/products" className={`flex items-center px-4 py-3 hover:bg-gray-700 ${location.pathname.includes('/products') ? 'border-l-4 border-pink-500' : ''}`}>
+              <ShoppingBagIcon size={18} className="mr-2" />
+              <span>Products</span>
+            </Link>
+          </li>
+        </ul>
+      </nav>
+      <div className="border-t border-gray-700 mt-4 pt-4">
+        <ul>
+          <li>
+            <Link to="/about" className="flex items-center px-4 py-2 hover:bg-gray-700">
+              <InfoIcon size={16} className="mr-2" />
+              <span className="text-sm">About Us</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/contact" className="flex items-center px-4 py-2 hover:bg-gray-700">
+              <PhoneIcon size={16} className="mr-2" />
+              <span className="text-sm">Contact Us</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/refer" className="flex items-center px-4 py-2 hover:bg-gray-700">
+              <span className="text-sm">Refer Bet Right ❤️</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/download" className="flex items-center px-4 py-2 hover:bg-gray-700">
+              <DownloadIcon size={16} className="mr-2" />
+              <span className="text-sm">Download Apps</span>
+            </Link>
+          </li>
+        </ul>
+      </div>
+      <div className="border-t border-gray-700 mt-4 pt-4 px-4 pb-4">
+        <h3 className="text-sm font-medium mb-2">Popular Now</h3>
+        <ul className="space-y-2">
+          {mockSports.map(sport => <li key={sport.id}>
+              <Link to={`/sport/${sport.id}`} className="flex items-center text-sm hover:text-pink-500">
+                <span className={`w-5 h-5 mr-2 rounded-full flex items-center justify-center ${sport.bgColor}`}>
+                  {sport.icon}
+                </span>
+                <span>{sport.name}</span>
+              </Link>
+            </li>)}
+        </ul>
+      </div>
+    </aside>;
+};
+export default Sidebar;
