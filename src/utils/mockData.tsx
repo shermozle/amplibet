@@ -100,7 +100,6 @@ export const mockSports = [{
   icon: sportIcons.jleague,
   bgColor: 'bg-green-600'
 }];
-// Rest of the file remains unchanged
 export const mockRaces = [{
   id: 'r1',
   venue: 'Addington',

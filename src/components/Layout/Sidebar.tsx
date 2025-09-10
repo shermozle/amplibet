@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HomeIcon, FlagIcon, GamepadIcon, ShoppingBagIcon, InfoIcon, PhoneIcon, DownloadIcon } from 'lucide-react';
+import { HomeIcon, FlagIcon, GamepadIcon, ShoppingBagIcon, InfoIcon, PhoneIcon, DownloadIcon, ClipboardList } from 'lucide-react';
 import { mockSports } from '../../utils/mockData';
 const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -29,6 +29,12 @@ const Sidebar: React.FC = () => {
             <Link to="/sport/esports" className={`flex items-center px-4 py-3 hover:bg-[#2A4E8D] ${location.pathname.includes('/sport/esports') ? 'border-l-4 border-[#4F44E0]' : ''}`}>
               <GamepadIcon size={18} className="mr-2" />
               <span>Esports</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/my-bets" className={`flex items-center px-4 py-3 hover:bg-[#2A4E8D] ${location.pathname === '/my-bets' ? 'border-l-4 border-[#4F44E0]' : ''}`}>
+              <ClipboardList size={18} className="mr-2" />
+              <span>My Bets</span>
             </Link>
           </li>
           <li>
