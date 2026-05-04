@@ -63,7 +63,7 @@ const SignupPage: React.FC = () => {
         email: formData.email,
       });
       // Navigate to home after successful signup
-      navigate('/', { replace: true });
+      navigate('/home', { replace: true });
     } catch (err) {
       setError('Registration failed. Please try again.');
     }
