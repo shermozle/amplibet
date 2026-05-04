@@ -352,8 +352,6 @@ export const getEventsByType = (type: string) => {
       return mockAFLWEvents;
     case 'tennis':
       return mockTennisEvents;
-    case 'racing':
-      return mockRaces;
     default:
       return mockSportEvents;
   }
