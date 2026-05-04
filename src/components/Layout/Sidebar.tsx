@@ -8,7 +8,7 @@ const Sidebar: React.FC = () => {
       <nav className="flex-1">
         <ul>
           <li>
-            <Link to="/" className={`flex items-center px-4 py-3 hover:bg-[#2A4E8D] ${location.pathname === '/' ? 'border-l-4 border-[#4F44E0]' : ''}`}>
+            <Link to="/home" className={`flex items-center px-4 py-3 hover:bg-[#2A4E8D] ${location.pathname === '/home' ? 'border-l-4 border-[#4F44E0]' : ''}`}>
               <HomeIcon size={18} className="mr-2" />
               <span>Home</span>
             </Link>

@@ -62,7 +62,7 @@ const Header: React.FC = () => {
   };
 
   return <header className="bg-[#13294B] border-b border-[#1B3B6F] py-3 px-4 flex items-center justify-between">
-      <Link to="/" className="flex items-center" onClick={handleLogoClick}>
+      <Link to="/home" className="flex items-center" onClick={handleLogoClick}>
         <div className="text-xl font-bold text-white">
           <span className="text-white">AMPLI</span>
           <span className="text-[#4F44E0]">BET</span>
