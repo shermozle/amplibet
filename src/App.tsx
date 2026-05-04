@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import HomePage from './pages/HomePage';
 import SportPage from './pages/SportPage';
@@ -14,30 +14,22 @@ import { initializeAnalytics } from './utils/analytics';
 
 export function App() {
   useEffect(() => {
-    // Initialize Amplitude when the app loads
     initializeAnalytics();
   }, []);
-  
+
   return <AuthProvider>
       <WalletProvider>
         <BettingProvider>
           <Router>
             <Routes>
-              {/* Auth routes without layout */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
-              
-              {/* Main app routes with layout */}
-              <Route path="/*" element={
-                <Layout>
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/sport/:sportId" element={<SportPage />} />
-                    <Route path="/event/:eventId" element={<EventPage />} />
-                    <Route path="/my-bets" element={<MyBetsPage />} />
-                  </Routes>
-                </Layout>
-              } />
+              <Route element={<Layout><Outlet /></Layout>}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/sport/:sportId" element={<SportPage />} />
+                <Route path="/event/:eventId" element={<EventPage />} />
+                <Route path="/my-bets" element={<MyBetsPage />} />
+              </Route>
             </Routes>
           </Router>
         </BettingProvider>
