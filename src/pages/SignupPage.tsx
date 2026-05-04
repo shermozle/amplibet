@@ -34,22 +34,6 @@ const SignupPage: React.FC = () => {
     e.preventDefault();
     setError('');
 
-    // Basic validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
-      setError('Please fill in all fields');
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
-    }
-
     trackButtonClick('Signup Form Submit', 'SignupPage', { 
       email_domain: formData.email.split('@')[1] || 'unknown',
       has_first_name: !!formData.firstName,
