@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HomeIcon, FlagIcon, GamepadIcon, ShoppingBagIcon, InfoIcon, PhoneIcon, DownloadIcon, ClipboardList } from 'lucide-react';
+import { HomeIcon, FlagIcon, GamepadIcon, ClipboardList } from 'lucide-react';
 import { mockSports } from '../../utils/mockData';
 const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -37,41 +37,8 @@ const Sidebar: React.FC = () => {
               <span>My Bets</span>
             </Link>
           </li>
-          <li>
-            <Link to="/products" className={`flex items-center px-4 py-3 hover:bg-[#2A4E8D] ${location.pathname.includes('/products') ? 'border-l-4 border-[#4F44E0]' : ''}`}>
-              <ShoppingBagIcon size={18} className="mr-2" />
-              <span>Products</span>
-            </Link>
-          </li>
         </ul>
       </nav>
-      <div className="border-t border-[#13294B] mt-4 pt-4">
-        <ul>
-          <li>
-            <Link to="/about" className="flex items-center px-4 py-2 hover:bg-[#2A4E8D]">
-              <InfoIcon size={16} className="mr-2" />
-              <span className="text-sm">About Us</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/contact" className="flex items-center px-4 py-2 hover:bg-[#2A4E8D]">
-              <PhoneIcon size={16} className="mr-2" />
-              <span className="text-sm">Contact Us</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/refer" className="flex items-center px-4 py-2 hover:bg-[#2A4E8D]">
-              <span className="text-sm">Refer AmpliBet 💜</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/download" className="flex items-center px-4 py-2 hover:bg-[#2A4E8D]">
-              <DownloadIcon size={16} className="mr-2" />
-              <span className="text-sm">Download Apps</span>
-            </Link>
-          </li>
-        </ul>
-      </div>
       <div className="border-t border-[#13294B] mt-4 pt-4 px-4 pb-4">
         <h3 className="text-sm font-medium mb-2">Popular Now</h3>
         <ul className="space-y-2">
