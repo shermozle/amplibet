@@ -1,53 +1,45 @@
-import { initAll, track, identify, experiment, Types } from '@amplitude/unified';
+import { initAll, track, identify, experiment } from '@amplitude/unified';
 // Import Identify class from the underlying analytics package that unified uses
 import { Identify } from '@amplitude/analytics-browser';
 
 const AMPLITUDE_API_KEY = '51a87354dce5f3a16ac6fe902c4c59a0';
 
-
-
-// Initialize Amplitude Unified SDK with all features enabled
-export const initializeAnalytics = () => {
-  try {
-    initAll(AMPLITUDE_API_KEY, {
-      serverZone: 'US',
-      instanceName: 'amplibet-demo',
-      
-      // Analytics configuration
-      analytics: {
-        autocapture: {
-          attribution: true,
-          fileDownloads: true,
-          formInteractions: true,
-          pageViews: true,
-          sessions: true,
-          elementInteractions: true
-        },
-        defaultTracking: {
-          attribution: true,
-          fileDownloads: true,
-          formInteractions: true,
-          pageViews: true,
-          sessions: true
-        }
+// Initialize at module load so tracking calls on the landing page fire correctly
+// before any React component effects run.
+try {
+  initAll(AMPLITUDE_API_KEY, {
+    serverZone: 'US',
+    instanceName: 'amplibet-demo',
+    analytics: {
+      autocapture: {
+        attribution: true,
+        fileDownloads: true,
+        formInteractions: true,
+        pageViews: true,
+        sessions: true,
+        elementInteractions: true
       },
-      
-      // Session Replay configuration - enabled with 100% sample rate for demo
-      sessionReplay: {
-        sampleRate: 1
-      },
-      
-      // Web Experiment configuration
-      experiment: {
-        source: 'amplibet-demo'
+      defaultTracking: {
+        attribution: true,
+        fileDownloads: true,
+        formInteractions: true,
+        pageViews: true,
+        sessions: true
       }
-    });
-    
-    console.log('[Analytics] Amplitude Unified SDK initialized successfully');
-  } catch (error) {
-    console.error('[Analytics] Failed to initialize Amplitude:', error);
-  }
-};
+    },
+    sr: {
+      sampleRate: 1
+    },
+    experiment: {
+      source: 'amplibet-demo'
+    }
+  });
+} catch (error) {
+  console.error('[Analytics] Failed to initialize Amplitude:', error);
+}
+
+// Kept for backward compatibility — no-op since init now runs at module load.
+export const initializeAnalytics = () => {};
 // Track page views
 export const trackPageView = (pageName: string, properties?: Record<string, any>) => {
   track('Page Viewed', {
@@ -227,7 +219,8 @@ export const trackDeposit = (userId: string, amount: number, cardInfo: { cardNum
 // Experiment and Session Replay utilities
 export const getExperimentVariant = async (experimentKey: string, defaultValue: any = null) => {
   try {
-    const variant = await experiment.fetch(experimentKey);
+    if (!experiment) return defaultValue;
+    const variant = experiment.variant(experimentKey);
     track('Experiment Variant Assigned', {
       experiment_key: experimentKey,
       variant: variant,
