@@ -93,13 +93,12 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const storedBalance = localStorage.getItem(`amplibet_balance_${user.id}`);
       const storedTransactions = localStorage.getItem(`amplibet_transactions_${user.id}`);
       
-      const balance = storedBalance ? parseFloat(storedBalance) : 100; // Start with $100 default
+      const balance = storedBalance ? parseFloat(storedBalance) : 0;
       let transactions: Transaction[] = [];
-      
+
       if (storedTransactions) {
         try {
           const parsedTransactions = JSON.parse(storedTransactions);
-          // Convert timestamp strings back to Date objects
           transactions = parsedTransactions.map((t: any) => ({
             ...t,
             timestamp: new Date(t.timestamp)
@@ -107,20 +106,6 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         } catch (error) {
           console.error('Error parsing stored transactions:', error);
         }
-      } else {
-        // Create initial welcome deposit transaction if no transaction history exists
-        const welcomeTransaction: Transaction = {
-          id: Math.random().toString(36).substr(2, 9),
-          type: 'deposit',
-          amount: 100,
-          description: 'Welcome bonus',
-          timestamp: new Date(),
-          status: 'completed'
-        };
-        transactions = [welcomeTransaction];
-        
-        // Save the initial transaction
-        localStorage.setItem(`amplibet_transactions_${user.id}`, JSON.stringify(transactions));
       }
       
       dispatch({ type: 'LOAD_WALLET_DATA', payload: { balance, transactions } });
