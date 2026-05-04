@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import HomePage from './pages/HomePage';
 import SportPage from './pages/SportPage';
@@ -21,7 +21,7 @@ export function App() {
   return <AuthProvider>
       <WalletProvider>
         <BettingProvider>
-          <Router basename={import.meta.env.BASE_URL}>
+          <Router>
             <Routes>
               {/* Auth routes without layout */}
               <Route path="/login" element={<LoginPage />} />
