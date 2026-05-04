@@ -89,7 +89,6 @@ const SignupPage: React.FC = () => {
                   name="firstName"
                   type="text"
                   autoComplete="given-name"
-                  required
                   className="appearance-none relative block w-full px-3 py-3 border border-gray-600 placeholder-gray-500 text-white bg-[#1B3B6F] rounded-md focus:outline-none focus:ring-[#4F44E0] focus:border-[#4F44E0] focus:z-10"
                   placeholder="First name"
                   value={formData.firstName}
@@ -105,7 +104,6 @@ const SignupPage: React.FC = () => {
                   name="lastName"
                   type="text"
                   autoComplete="family-name"
-                  required
                   className="appearance-none relative block w-full px-3 py-3 border border-gray-600 placeholder-gray-500 text-white bg-[#1B3B6F] rounded-md focus:outline-none focus:ring-[#4F44E0] focus:border-[#4F44E0] focus:z-10"
                   placeholder="Last name"
                   value={formData.lastName}
@@ -120,9 +118,8 @@ const SignupPage: React.FC = () => {
               <input
                 id="email"
                 name="email"
-                type="email"
+                type="text"
                 autoComplete="email"
-                required
                 className="appearance-none relative block w-full px-3 py-3 border border-gray-600 placeholder-gray-500 text-white bg-[#1B3B6F] rounded-md focus:outline-none focus:ring-[#4F44E0] focus:border-[#4F44E0] focus:z-10"
                 placeholder="Enter your email"
                 value={formData.email}
@@ -139,7 +136,6 @@ const SignupPage: React.FC = () => {
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  required
                   className="appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-600 placeholder-gray-500 text-white bg-[#1B3B6F] rounded-md focus:outline-none focus:ring-[#4F44E0] focus:border-[#4F44E0] focus:z-10"
                   placeholder="Create a password"
                   value={formData.password}
@@ -168,7 +164,6 @@ const SignupPage: React.FC = () => {
                   name="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  required
                   className="appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-600 placeholder-gray-500 text-white bg-[#1B3B6F] rounded-md focus:outline-none focus:ring-[#4F44E0] focus:border-[#4F44E0] focus:z-10"
                   placeholder="Confirm your password"
                   value={formData.confirmPassword}
