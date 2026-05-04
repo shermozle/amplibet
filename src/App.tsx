@@ -21,7 +21,7 @@ export function App() {
   return <AuthProvider>
       <WalletProvider>
         <BettingProvider>
-          <Router>
+          <Router basename={import.meta.env.BASE_URL}>
             <Routes>
               {/* Auth routes without layout */}
               <Route path="/login" element={<LoginPage />} />
