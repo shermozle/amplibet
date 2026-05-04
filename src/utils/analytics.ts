@@ -2,7 +2,7 @@ import { initAll, track, identify, experiment, Types } from '@amplitude/unified'
 // Import Identify class from the underlying analytics package that unified uses
 import { Identify } from '@amplitude/analytics-browser';
 
-const AMPLITUDE_API_KEY = 'cd0a06378fa27b07afd887594c5b786d';
+const AMPLITUDE_API_KEY = '51a87354dce5f3a16ac6fe902c4c59a0';
 
 
 
