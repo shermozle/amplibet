@@ -1,6 +1,8 @@
-import { initAll, track, identify, experiment } from '@amplitude/unified';
+import { initAll, add, track, identify, experiment } from '@amplitude/unified';
 // Import Identify class from the underlying analytics package that unified uses
 import { Identify } from '@amplitude/analytics-browser';
+// Guides & Surveys (in-product engagement) plugin
+import { plugin as engagementPlugin } from '@amplitude/engagement-browser';
 
 const AMPLITUDE_API_KEY = '51a87354dce5f3a16ac6fe902c4c59a0';
 
@@ -34,6 +36,14 @@ try {
       source: 'amplibet-demo'
     }
   });
+
+  // Add Amplitude Guides & Surveys (in-product engagement) as a plugin on the
+  // unified analytics instance. In plugin mode the SDK boots itself off the
+  // analytics instance's user/device — no separate init()/boot() needed.
+  add(engagementPlugin({
+    serverZone: 'US',
+    autoRefreshIntervalSeconds: 3600
+  }));
 } catch (error) {
   console.error('[Analytics] Failed to initialize Amplitude:', error);
 }
