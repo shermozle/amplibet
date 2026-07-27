@@ -12,6 +12,12 @@ import AccountPage from './pages/AccountPage';
 import ResultsPage from './pages/ResultsPage';
 import RacingPage from './pages/RacingPage';
 import RacePage from './pages/RacePage';
+import KioskLayout from './kiosk/KioskLayout';
+import KioskAttractPage from './kiosk/KioskAttractPage';
+import KioskScanPage from './kiosk/KioskScanPage';
+import KioskHomePage from './kiosk/KioskHomePage';
+import KioskSlipPage from './kiosk/KioskSlipPage';
+import KioskDonePage from './kiosk/KioskDonePage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { BettingProvider } from './contexts/BettingContext';
 import { WalletProvider } from './contexts/WalletContext';
@@ -38,6 +44,17 @@ export function App() {
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/signup" element={<SignupPage />} />
                   <Route path="/" element={<RootRoute />} />
+                  {/* Kiosk surface: its own chrome (no Header/Sidebar/BetSlip),
+                      same providers, so a scanned member shares the exact
+                      contexts a web member does. KioskLayout flips the
+                      analytics surface to 'kiosk' while mounted. */}
+                  <Route path="/kiosk" element={<KioskLayout />}>
+                    <Route index element={<KioskAttractPage />} />
+                    <Route path="scan" element={<KioskScanPage />} />
+                    <Route path="home" element={<KioskHomePage />} />
+                    <Route path="slip" element={<KioskSlipPage />} />
+                    <Route path="done" element={<KioskDonePage />} />
+                  </Route>
                   <Route element={<Layout><Outlet /></Layout>}>
                     <Route path="/home" element={<HomePage />} />
                     <Route path="/sport/:sportId" element={<SportPage />} />

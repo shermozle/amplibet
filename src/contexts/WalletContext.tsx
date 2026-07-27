@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { trackDeposit, trackDepositFailed, trackWithdrawal, trackWithdrawalFailed } from '../utils/analytics';
+import { trackDeposit, trackDepositFailed, trackWithdrawal, trackWithdrawalFailed, trackCashInserted } from '../utils/analytics';
 
 export interface Transaction {
   id: string;
@@ -34,6 +34,9 @@ interface WalletState {
 interface WalletContextType extends WalletState {
   deposit: (amount: number, cardInfo: CreditCardInfo) => Promise<void>;
   withdraw: (amount: number) => Promise<void>;
+  // Kiosk cash acceptor: instant, no card details, no simulated decline — a
+  // note either feeds or it doesn't.
+  insertCash: (amount: number) => void;
   deductFunds: (amount: number, description: string) => boolean;
   addPayout: (amount: number, description: string) => void;
   getFormattedBalance: () => string;
@@ -228,6 +231,22 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     dispatch({ type: 'WITHDRAW_SUCCESS', payload: { amount, transaction } });
   };
 
+  const insertCash = (amount: number): void => {
+    if (!isAuthenticated || !user || amount <= 0) return;
+
+    const transaction: Transaction = {
+      id: Math.random().toString(36).slice(2, 11),
+      type: 'deposit',
+      amount,
+      description: 'Cash inserted at kiosk',
+      timestamp: new Date(),
+      status: 'completed'
+    };
+
+    trackCashInserted(amount, state.balance + amount);
+    dispatch({ type: 'DEPOSIT_SUCCESS', payload: { amount, transaction } });
+  };
+
   const deductFunds = (amount: number, description: string): boolean => {
     if (!isAuthenticated || !user) {
       return false;
@@ -275,6 +294,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     ...state,
     deposit,
     withdraw,
+    insertCash,
     deductFunds,
     addPayout,
     getFormattedBalance,
