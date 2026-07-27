@@ -122,9 +122,11 @@ export const trackBetPlaced = (bets: Array<{
   selection: string;
   odds: number;
   stake?: number;
-}>, totalStake: number, estimatedPayout: number) => {
+}>, totalStake: number, estimatedPayout: number, betType: 'single' | 'multi' = 'single', combinedOdds?: number) => {
   track('Bet Placed', {
     bet_count: bets.length,
+    bet_type: betType,
+    combined_odds: combinedOdds,
     total_stake: totalStake,
     estimated_payout: estimatedPayout,
     potential_profit: estimatedPayout - totalStake,
@@ -136,6 +138,27 @@ export const trackBetPlaced = (bets: Array<{
       stake: bet.stake || 0,
       potential_win: (bet.stake || 0) * bet.odds
     }))
+  });
+};
+
+// A pending bet resolving to won or lost. Fired once per bet at settlement so
+// win rate, hold and payout are analysable per selection rather than only in
+// aggregate.
+export const trackBetSettled = (
+  betId: string,
+  selection: string,
+  result: 'won' | 'lost',
+  stake: number,
+  payout: number
+) => {
+  track('Bet Settled', {
+    bet_id: betId,
+    selection,
+    result,
+    stake,
+    payout,
+    net: payout - stake,
+    timestamp: new Date().toISOString()
   });
 };
 // Identity
@@ -329,6 +352,110 @@ export const trackLoyaltyCardViewed = (loyaltyId: string, tier: string, points: 
     loyalty_id: loyaltyId,
     loyalty_tier: tier,
     points_balance: points,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Wallet
+export const trackWithdrawal = (amount: number) => {
+  track('Withdrawal Made', {
+    amount,
+    currency: 'USD',
+    withdrawal_method: 'bank_transfer',
+    timestamp: new Date().toISOString(),
+    transaction_type: 'withdrawal'
+  });
+};
+
+export const trackWithdrawalFailed = (amount: number, reason: string) => {
+  track('Withdrawal Failed', {
+    amount,
+    currency: 'USD',
+    failure_reason: reason,
+    withdrawal_method: 'bank_transfer',
+    timestamp: new Date().toISOString(),
+    transaction_type: 'withdrawal'
+  });
+};
+
+// Search
+export const trackSearchPerformed = (
+  query: string,
+  resultCount: number,
+  sportFilter: string | null,
+  sortBy: string
+) => {
+  track('Search Performed', {
+    query,
+    result_count: resultCount,
+    sport_filter: sportFilter ?? 'all',
+    sort_by: sortBy,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Onboarding
+export const trackOnboardingStarted = () => {
+  track('Onboarding Started', { timestamp: new Date().toISOString() });
+};
+
+export const trackOnboardingStepViewed = (stepIndex: number, stepName: string) => {
+  track('Onboarding Step Viewed', {
+    step_index: stepIndex,
+    step_name: stepName,
+    timestamp: new Date().toISOString()
+  });
+};
+
+export const trackOnboardingCompleted = () => {
+  track('Onboarding Completed', { timestamp: new Date().toISOString() });
+};
+
+export const trackOnboardingSkipped = (stepIndex: number) => {
+  track('Onboarding Skipped', {
+    step_index: stepIndex,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Responsible gambling. The prompt and the choice are separate events so the
+// funnel (prompted → continued vs cancelled) is analysable.
+export const trackResponsibleGamblingPromptShown = (totalStake: number) => {
+  track('Responsible Gambling Prompt Shown', {
+    total_stake: totalStake,
+    timestamp: new Date().toISOString()
+  });
+};
+
+export const trackResponsibleGamblingChoice = (
+  choice: 'continued' | 'cancelled',
+  totalStake: number
+) => {
+  track('Responsible Gambling Choice', {
+    choice,
+    total_stake: totalStake,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Session timeout
+export const trackSessionTimeoutWarningShown = () => {
+  track('Session Timeout Warning Shown', { timestamp: new Date().toISOString() });
+};
+
+export const trackSessionTimedOut = () => {
+  track('Session Timed Out', { timestamp: new Date().toISOString() });
+};
+
+export const trackSessionExtended = () => {
+  track('Session Extended', { timestamp: new Date().toISOString() });
+};
+
+// In-app notifications (toasts)
+export const trackNotificationShown = (notificationType: string, title: string) => {
+  track('Notification Shown', {
+    notification_type: notificationType,
+    title,
     timestamp: new Date().toISOString()
   });
 };

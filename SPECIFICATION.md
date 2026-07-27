@@ -82,12 +82,17 @@ index.html ──> Amplitude Web Experiment snippet (synchronous, pre-React)
         └─ AuthProvider ─> WalletProvider ─> BettingProvider ─> HashRouter
 ```
 
-### Providers (nesting order matters — Betting depends on both Auth and Wallet)
+### Providers (nesting order is load-bearing)
 | Provider | File | Responsibility |
 |---|---|---|
-| `AuthProvider` | [src/contexts/AuthContext.tsx](src/contexts/AuthContext.tsx) | Mock user, session restore, login/signup/logout |
-| `WalletProvider` | [src/contexts/WalletContext.tsx](src/contexts/WalletContext.tsx) | Balance, transactions, deposit, deduct, payout |
-| `BettingProvider` | [src/contexts/BettingContext.tsx](src/contexts/BettingContext.tsx) | Bet slip, stake, place, history, settle |
+| `AuthProvider` | [src/contexts/AuthContext.tsx](src/contexts/AuthContext.tsx) | Mock user, loyalty ID, session restore, login/signup/logout |
+| `WalletProvider` | [src/contexts/WalletContext.tsx](src/contexts/WalletContext.tsx) | Balance, transactions, deposit, withdraw, deduct, payout |
+| `LoyaltyProvider` | [src/contexts/LoyaltyContext.tsx](src/contexts/LoyaltyContext.tsx) | Points ledger, tiers, earn-on-stake |
+| `NotificationProvider` | [src/contexts/NotificationContext.tsx](src/contexts/NotificationContext.tsx) | Toasts (`ToastViewport`), `Notification Shown` events |
+| `BettingProvider` | [src/contexts/BettingContext.tsx](src/contexts/BettingContext.tsx) | Bet slip, singles/multi, place, history, settlement |
+
+Betting sits innermost because placement credits points (Loyalty), moves money
+(Wallet) and settlement raises toasts (Notification).
 
 ### Routes ([src/App.tsx](src/App.tsx))
 | Path | Component | Layout | Notes |
@@ -96,18 +101,27 @@ index.html ──> Amplitude Web Experiment snippet (synchronous, pre-React)
 | `/login` | `LoginPage` | none | |
 | `/signup` | `SignupPage` | none | |
 | `/home` | `HomePage` | `Layout` | |
-| `/sport/:sportId` | `SportPage` | `Layout` | |
+| `/sport/:sportId` | `SportPage` | `Layout` | Head-to-head sports incl. esports |
 | `/event/:eventId` | `EventPage` | `Layout` | |
+| `/racing` | `RacingPage` | `Layout` | Race cards index |
+| `/race/:raceId` | `RacePage` | `Layout` | Win market per runner |
 | `/my-bets` | `MyBetsPage` | `Layout` | |
+| `/results` | `ResultsPage` | `Layout` | Pending bets + simulated settlement |
+| `/account` | `AccountPage` | `Layout` | Profile, withdraw, transaction history |
+| `/rewards` | `LoyaltyPage` | `Layout` | Loyalty card, barcode, ledger |
 
 `Layout` = `Header` + `Sidebar` + `<main>` + `BetSlip`, composed via an `Outlet` pattern so
-providers and chrome are not remounted on navigation.
+providers and chrome are not remounted on navigation. It is responsive: below `lg` the
+sidebar becomes a hamburger-opened drawer and the bet slip a bottom sheet behind a floating
+toggle. `Layout` also mounts `ToastViewport`, `SessionTimeoutManager` (10-minute idle
+warning → sign-out) and `OnboardingOverlay` (3-step first-visit tour, per-member flag).
 
 ### Data
 All content is hardcoded in [src/utils/mockData.tsx](src/utils/mockData.tsx):
-- 16 sports/leagues (AFL, AFLW, NRL, NRLW, NZ NPC, MLB, WNBA, FBA Asia Cup, NFL Preseason,
-  Premier League, Championship, La Liga, Ligue 1, MLS, Brazil Serie A, J League)
-- 4 NRL/AFL events, 5 AFLW events, 3 "tennis" events (two of which are actually golf), 9 races
+- 17 sports/leagues (adds Esports to the original 16)
+- 4 NRL/AFL events, 5 AFLW events, 3 "tennis" events (two of which are actually golf),
+  3 esports fixtures, and 4 full race cards (venue, distance, 5–6 runners with win odds);
+  the legacy 9-race ticker list remains for the home page rail
 - Odds are static decimal numbers; no movement, no live updates
 
 ### Persistence (localStorage only)
@@ -118,6 +132,11 @@ All content is hardcoded in [src/utils/mockData.tsx](src/utils/mockData.tsx):
 | `amplibet_history_{userId}` | BettingContext (placed bets) |
 | `amplibet_balance_{userId}` | WalletContext |
 | `amplibet_transactions_{userId}` | WalletContext |
+| `amplibet_loyalty_{userId}` | LoyaltyContext (points ledger) |
+| `amplibet_onboarded_{userId}` | OnboardingOverlay (tour completed/skipped) |
+
+Every per-user writer keeps an ownership marker in state and persists only once its state
+provably belongs to the signed-in member — see defect 12 for why.
 
 ---
 
@@ -130,8 +149,13 @@ All content is hardcoded in [src/utils/mockData.tsx](src/utils/mockData.tsx):
   arbitrary/blank forms.
 - Login requires both fields non-empty; any values then succeed after a 500 ms fake delay.
   First/last name are derived from the email local part (`first.last@…`).
-- User id is a random base-36 string. Amplitude `user_id` is set to the **email**, not this id.
-- Session persists across reloads via `amplibet_user`; logout clears it.
+- User id **is** the loyalty ID (`AB-XXXXXXXX`), which is also the Amplitude `user_id` —
+  see § Identity.
+- Session persists across reloads via `amplibet_user`; logout clears it and every per-user
+  key. A 10-minute idle timeout (`SessionTimeoutManager`) warns with a 60-second countdown,
+  then signs the member out.
+- First visit after signup shows a 3-step onboarding tour (per-member localStorage flag;
+  completing or skipping it is tracked).
 
 ### Wallet
 - New accounts start at **$0.00** (changed from $100 in commit `7eb1ec6`) — the user must
@@ -141,23 +165,38 @@ All content is hardcoded in [src/utils/mockData.tsx](src/utils/mockData.tsx):
   expiry-not-past, 3–4 digit CVV, non-empty cardholder name — all validated client-side.
 - 2 s simulated processing delay, then a **5% random failure** raising
   "Payment processing failed. Please try again."
-- Transactions are typed `deposit` | `bet` | `payout` and prepended to a list. The list is
-  surfaced nowhere in the UI.
+- **Withdrawals** (`/account`): amount validated against balance, 1.2 s delay, **8% random
+  provider decline**. Success and failure both tracked (`Withdrawal Made` / `Withdrawal
+  Failed`) and toasted.
+- Transactions are typed `deposit` | `bet` | `payout` | `withdrawal` and rendered as the
+  transaction history on `/account`.
 
 ### Betting
-- Selecting a team on `EventPage` adds a selection to the slip. Only the **Match Result**
-  market is wired; Handicap, Total Match Points, First Team to Score, and Race to 20 Points
-  are rendered but inert.
-- One selection per event: adding a second selection for the same `eventId` replaces the first.
-- "Single Bets" only. Estimated payout is the **sum of individual payouts**, not a multiplied
-  parlay. There is no multi-bet builder.
+- Selecting a team on `EventPage` (or a runner on `RacePage`) adds a selection to the slip.
+  Only the **Match Result** / **Win** markets are wired; the other rendered markets are inert.
+- Selections are keyed by event **and** selection, so both sides of a match can sit in the
+  slip at once — legitimate as singles (dutching), rejected as a multi.
+- The slip has **Singles** and **Multi** modes. Multi multiplies the legs' odds into one
+  price on a single stake; validation requires ≥ 2 legs and rejects two selections from the
+  same event ("incompatible selections"). A multi lands in history as one `PlacedBet` with
+  `betType: 'multi'` and its `legs` preserved.
 - Place Bet is blocked when: not signed in (redirects to `/login` preserving the target),
-  any stake is 0/unset, or `totalStake > balance` ("Insufficient Funds").
-- On success: funds deducted, 1 s fake delay, bets moved to history as `pending`, slip cleared.
-- **Settlement is simulated only while `/my-bets` is mounted**: a bet older than 30 s is
-  resolved with a **60% win** probability; wins credit `stake × odds` back to the wallet.
-  A bet placed and never revisited stays `pending` indefinitely.
-- Bet slip is collapsible to a 12-px rail with a selection count.
+  stakes unset, multi validation failing, or stake > balance ("Insufficient Funds").
+- Stakes above **$200** (`RESPONSIBLE_GAMBLING_THRESHOLD`) interrupt placement with a
+  responsible-gambling prompt (gambling help line shown); both the prompt and the
+  continued/cancelled choice are tracked.
+- After validation and before money moves, placement fails randomly at **12%**
+  (`SIMULATED_FAILURE_RATE`) with one of three bookmaker-style reasons — the PRD's 10–20%
+  error-rate target. A simulated failure never costs the user funds.
+- On success: funds deducted, bets land in history as `pending`, slip cleared, loyalty
+  points credited on the stake.
+- **Settlement** is explicit: the `/results` page's "Settle pending bets" button runs
+  `BettingContext.settlePendingBets()`, which resolves each pending bet with win probability
+  `0.95 / odds` (implied probability with a 5% house margin, so long shots lose more often
+  and the book holds), pays winners into the wallet, emits `Bet Settled` per bet and raises
+  win/loss toasts. The old 30-second 60% coin flip on `/my-bets` is removed.
+- Bet slip is collapsible to a rail on desktop; on small screens it is a bottom sheet behind
+  a floating toggle showing the selection count.
 
 ---
 
@@ -196,8 +235,9 @@ built around. Call that wrapper, never the SDK's `track` directly.
 | `Bet Added` | BettingContext | `bet_id`, `event_id`, `selection`, `odds` |
 | `Bet Removed` | BetSlip | `bet_id` |
 | `Bet Stake Updated` | BetSlip | `bet_id`, `stake` |
-| `Bet Placed` | BettingContext | `bet_count`, `total_stake`, `estimated_payout`, `potential_profit`, `bets[]` |
-| `Bet Placement Failed` | BettingContext (every rejection path) | `failure_reason`, `bet_count`, `total_stake`, `selections` |
+| `Bet Placed` | BettingContext | `bet_count`, `bet_type` (`single`\|`multi`), `combined_odds`, `total_stake`, `estimated_payout`, `potential_profit`, `bets[]` |
+| `Bet Placement Failed` | BettingContext (every rejection path, incl. the 12% simulated bookmaker failures) | `failure_reason`, `bet_count`, `total_stake`, `selections` |
+| `Bet Settled` | BettingContext.settlePendingBets (once per bet) | `bet_id`, `selection`, `result`, `stake`, `payout`, `net` |
 | `User Signed Up` | AuthContext | `loyalty_id`, `signup_method` |
 | `User Logged In` | AuthContext | `loyalty_id`, `login_method` |
 | `User Logged Out` | AuthContext | `loyalty_id` |
@@ -206,7 +246,14 @@ built around. Call that wrapper, never the SDK's `track` directly.
 | `Loyalty Card Viewed` | LoyaltyPage | `loyalty_id`, `loyalty_tier`, `points_balance` |
 | `Deposit Made` | WalletContext (success only) | `amount`, `currency`, `card_brand`, `card_last_four`, `payment_method` |
 | `Deposit Failed` | WalletContext | `amount`, `failure_reason`, `card_brand` |
-| `Button Clicked` | Landing, Login, Signup, Header, BetSlip | `button_name`, `location`, plus ad-hoc props |
+| `Withdrawal Made` | WalletContext | `amount`, `currency`, `withdrawal_method` |
+| `Withdrawal Failed` | WalletContext (validation + 8% simulated declines) | `amount`, `failure_reason` |
+| `Search Performed` | SearchModal (debounced 400 ms) | `query`, `result_count`, `sport_filter`, `sort_by` |
+| `Onboarding Started` / `Step Viewed` / `Completed` / `Skipped` | OnboardingOverlay | `step_index`, `step_name` |
+| `Responsible Gambling Prompt Shown` / `Choice` | ResponsibleGamblingModal | `total_stake`, `choice` (`continued`\|`cancelled`) |
+| `Session Timeout Warning Shown` / `Session Extended` / `Session Timed Out` | SessionTimeoutManager | — |
+| `Notification Shown` | NotificationContext | `notification_type`, `title` |
+| `Button Clicked` | Landing, Login, Signup, Header, BetSlip, pages | `button_name`, `location`, plus ad-hoc props |
 
 ### Loyalty programme
 
@@ -256,48 +303,71 @@ two `user_id`s depending on how they arrived. Neither stitches to a loyalty ID. 
 
 ## 6. Design
 
-The implemented palette does **not** match the Amplitude palette specified in the PRD
-(`#0052f2`, `#edf0f5`, `#001a4f`, `#6980ff`, `#a373ff`, `#ff7d78`, `#f23845`). As built:
+The UI uses the **Amplitude brand palette from the PRD**, expressed as semantic tokens in
+[tailwind.config.js](tailwind.config.js) — components reference token classes
+(`bg-surface`, `text-accent`, …) rather than hex utilities, so the palette lives in one file.
 
 | Token | Value | Use |
 |---|---|---|
-| Primary / brand | `#4F44E0` (hover `#3832A0`) | CTAs, active nav, "BET" in wordmark |
-| Accent | `#50E3C2` | Headings, payout figures, hover text |
-| Secondary accent | `#9B7BFD` | Link hover |
-| App background | `#13294B` | Authenticated shell |
-| Surface | `#1B3B6F` (raised `#2A4E8D`) | Cards, sidebar, bet slip |
-| Landing background | `#0F1929` | Marketing page |
-| Auth background | `#0F1419` | Login / signup |
+| `brand` / `brand-dark` | `#0052f2` / `#0041c2`* | CTAs, active nav, "BET" in wordmark |
+| `ink` / `ink-deep` | `#001a4f` / `#001238`* | App shell / marketing & auth backgrounds |
+| `surface` | `#002570`* | Cards, sidebar, bet slip |
+| `raised` / `raised-light` | `#003398` / `#0f47c4`* | Inputs, chips, hover elevation |
+| `accent` | `#6980ff` | Payouts, positive money, success, headings |
+| `grape` | `#a373ff` | Link hover, esports chip |
+| `salmon` | `#ff7d78` | Warnings (responsible gambling, failed withdrawals) |
+| `danger` | `#f23845` | Errors, insufficient funds |
+| `paper` | `#edf0f5` | Light text surfaces, Platinum tier |
 
-Some Home components still use generic Tailwind greys (`bg-gray-800`, plus a non-existent
-`hover:bg-gray-750`), so the home page is visually inconsistent with the rest of the shell.
+\* Derived tints/shades — the PRD gives seven flat colours and a UI needs elevation steps and
+hover states; derivations are documented in the config. Sport-chip colours in `mockData` and
+the Bronze/Silver/Gold metals are data, not chrome, and keep their own values.
 
 ---
 
-## 7. Not implemented
+## 7. PRD delivery status and remaining gaps
 
-### PRD requirements with no implementation
+### PRD requirements — delivered
 | PRD requirement | State |
 |---|---|
-| **Withdrawal flow** | Absent entirely. No UI, no context method. |
-| **Results & settlements page** | Absent. Only `/my-bets`, and settlement runs solely while that page is open. |
-| **Notifications** (win/loss/unsettled) | Absent. |
-| **Multi-bet / parlay builder** | Absent. Slip is singles-only; no combination validation. |
-| **Search & filter** by sport/date/popularity | Header search icon and all Filter icons are decorative — no handlers beyond a `Button Clicked` event. |
-| **Bet-placement random failure** | Not implemented. Only deposits fail randomly (5%). Bet errors are deterministic (insufficient funds / no stake). PRD target was a 10–20% error rate. |
-| **Onboarding overlay** for first-time users | Absent (could be delivered via Guides & Surveys instead). |
-| **Responsible Gambling modal** on large bets | Absent. |
-| **Simulated session timeout / forced logout** | Absent. |
-| **Featured-events carousel** on landing | Static 4-up benefit grid instead. |
-| **Account overview page** (profile, activity) | Absent. Only a header dropdown with name/email and Sign out. Transaction history is stored but never displayed. |
-| **Keyboard navigation / screen-reader support** | Not addressed. No ARIA on the modal, no focus trap, no skip links, several `<a href="#">` placeholders. |
-| **Mobile responsiveness** | Partial. Landing/auth pages are responsive; the authenticated shell is not — `Sidebar` is a fixed `w-48` and `BetSlip` a fixed `w-72`, with no hamburger or drawer. The PRD's "mobile user" persona is unserved. |
-| **Bot-driven data generation** | No bot harness, script, or seeding tool in the repo. |
-| **Amplitude brand palette** | Not applied (see §6). |
-| **Racing** | 9 races render on the home page, but their links go to `/event/r{n}`, which has no matching event — `getEventById` returns undefined and `EventPage` silently falls back to `mockAFLWEvents[0]`. |
-| **Esports** | Sidebar link exists; no data, falls through to the generic sport list. |
+| **Withdrawal flow** | ✅ `/account`: validated amount, 8% simulated decline, tracked + toasted. |
+| **Results & settlements page** | ✅ `/results`: pending list, explicit settlement from odds-implied probabilities, `Bet Settled` per bet. |
+| **Notifications** (win/loss) | ✅ Toasts via `NotificationContext`, each emitting `Notification Shown`. |
+| **Multi-bet / parlay builder** | ✅ Slip Singles/Multi modes, combined odds, incompatible-selection validation. |
+| **Search & filter** by sport/date/popularity | ✅ Header search modal: text query, sport chips, soonest/most-markets sort, debounced `Search Performed`. Races are not searchable (head-to-head events only). |
+| **Bet-placement random failure** (10–20% target) | ✅ 12% simulated bookmaker failure after validation, before funds move. |
+| **Onboarding overlay** | ✅ 3-step first-visit tour, per-member flag, full started/step/completed/skipped funnel. |
+| **Responsible Gambling modal** on large bets | ✅ Interrupts stakes > $200; prompt and choice tracked; helpline shown. |
+| **Simulated session timeout** | ✅ 10-min idle → 60 s warning countdown → sign-out; warning/extended/timed-out tracked. |
+| **Account overview page** | ✅ `/account`: profile, loyalty ID, withdraw, full transaction history. |
+| **Keyboard navigation / screen-reader support** | ✅ (baseline) `useFocusTrap` on every dialog (trap, initial focus, Escape, focus restore), `aria-modal`/labels, `aria-live` toasts, labelled icon buttons. No skip links yet. |
+| **Mobile responsiveness** | ✅ Below `lg`: sidebar drawer behind a hamburger, bet slip bottom sheet behind a floating toggle. |
+| **Amplitude brand palette** | ✅ See §6. |
+| **Racing** | ✅ `/racing` index + `/race/:raceId` win markets; home-page race rail repointed. |
+| **Esports** | ✅ Three fixtures behind the existing sidebar link via the generic sport page. |
 
-### Known defects
+### Still not implemented
+| Item | State |
+|---|---|
+| **Bot-driven data generation** | Planned as the cross-surface simulation script (Release 2, PR5). |
+| **Kiosk surface** | Planned (Release 2, PR4). |
+| **Featured-events carousel** on landing | Static 4-up benefit grid instead. |
+| **Markets beyond Match Result / Win** | Handicap, totals etc. render but are inert. |
+| **Theme toggle** | Header button emits `Button Clicked` only. |
+| **Live odds movement** | All odds static until the fixture-sync work (PR5). |
+
+### Known defects — all fixed (kept as a log; numbers are referenced elsewhere)
+
+Every defect below is **fixed** (1–7, 10 in PR #2's branch; 8–9 likewise; 11–12 in the
+loyalty and PRD-features work). Two more were found and fixed during the PRD-features pass:
+
+13. **Two settlement engines.** `MyBetsPage` kept its original 30-second 60% coin flip after
+    `settlePendingBets()` landed — untracked, untoasted, and racing the real engine, which
+    could settle the same bet twice and double-pay a winner. The page-level settler is
+    removed; settlement is only `BettingContext.settlePendingBets()`.
+14. **`Event Selected` on unknown-id fallback** (see 10) would have returned via the race
+    pages had `RacePage` reused the fallback pattern; it renders a not-found state instead.
+
 1. **Duplicate `Bet Added` events.** `EventPage.handleBetSelection` calls `trackBetAdded`
    ([src/pages/EventPage.tsx:39](src/pages/EventPage.tsx#L39)) *and* `BettingContext.addBet`
    calls it again ([src/contexts/BettingContext.tsx:90](src/contexts/BettingContext.tsx#L90)).

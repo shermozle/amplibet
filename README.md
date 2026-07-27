@@ -61,6 +61,11 @@ environment.
   error-state analysis, so a silent failure is a missing feature.
 - Track an event in exactly one place. `Bet Added` is emitted inside `BettingContext.addBet`;
   callers must not also track it.
+- Colours come from the semantic tokens in [tailwind.config.js](tailwind.config.js)
+  (`bg-surface`, `text-accent`, …) — never hex utility classes. The Amplitude brand palette
+  lives in that one file.
+- Modal dialogs use `useFocusTrap` (Tab wrap, initial focus, Escape, focus restore); traps
+  stack, so Escape closes only the topmost dialog.
 
 ## Attribution
 

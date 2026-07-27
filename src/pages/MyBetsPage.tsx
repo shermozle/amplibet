@@ -1,44 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBetting } from '../contexts/BettingContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useWallet } from '../contexts/WalletContext';
 import { Clock, CheckCircle, XCircle, DollarSign, Calendar, Filter } from 'lucide-react';
 
 const MyBetsPage: React.FC = () => {
-  const { betHistory, settleBet } = useBetting();
+  const { betHistory } = useBetting();
   const { isAuthenticated } = useAuth();
-  const { addPayout } = useWallet();
   const [filter, setFilter] = useState<'all' | 'pending' | 'won' | 'lost'>('all');
-  const [processedBetIds, setProcessedBetIds] = useState<Set<string>>(new Set());
 
-  // Simulate bet outcomes for demo purposes
-  useEffect(() => {
-    betHistory.forEach(bet => {
-      // If bet is pending, was placed more than 30 seconds ago, and hasn't been processed yet
-      if (bet.status === 'pending' && bet.placedAt && !processedBetIds.has(bet.id)) {
-        const timeSincePlaced = Date.now() - new Date(bet.placedAt).getTime();
-        if (timeSincePlaced > 30000) { // 30 seconds
-          // 60% chance to win for demo
-          const won = Math.random() > 0.4;
-          
-          if (won) {
-            const actualPayout = bet.potentialPayout || 0;
-            // Add winnings to wallet
-            addPayout(actualPayout, `Bet win: ${bet.selection}`);
-            // Settle bet as won
-            settleBet(bet.id, 'won', actualPayout);
-          } else {
-            // Settle bet as lost
-            settleBet(bet.id, 'lost', 0);
-          }
-          
-          // Mark this bet as processed
-          setProcessedBetIds(prev => new Set(prev).add(bet.id));
-        }
-      }
-    });
-  }, [betHistory, addPayout, settleBet, processedBetIds]);
+  // Settlement is BettingContext.settlePendingBets, triggered from the Results
+  // page. This page used to run its own 30-second 60% coin flip on mount, which
+  // emitted no 'Bet Settled' events and would now race the real engine —
+  // settling the same bet twice and paying a winner double.
 
   const filteredBets = betHistory.filter(bet => {
     if (filter === 'all') return true;
@@ -50,9 +24,9 @@ const MyBetsPage: React.FC = () => {
       case 'pending':
         return <Clock className="text-yellow-400" size={16} />;
       case 'won':
-        return <CheckCircle className="text-green-400" size={16} />;
+        return <CheckCircle className="text-accent" size={16} />;
       case 'lost':
-        return <XCircle className="text-red-400" size={16} />;
+        return <XCircle className="text-danger" size={16} />;
     }
   };
 
@@ -72,9 +46,9 @@ const MyBetsPage: React.FC = () => {
       case 'pending':
         return 'text-yellow-400';
       case 'won':
-        return 'text-green-400';
+        return 'text-accent';
       case 'lost':
-        return 'text-red-400';
+        return 'text-danger';
     }
   };
 
@@ -94,11 +68,11 @@ const MyBetsPage: React.FC = () => {
     return (
       <div className="p-8 text-center">
         <h1 className="text-2xl font-bold text-white mb-4">My Bets</h1>
-        <div className="bg-[#1B3B6F] rounded-lg p-8">
+        <div className="bg-surface rounded-lg p-8">
           <p className="text-gray-300 mb-4">Please log in to view your bet history</p>
           {/* Must be a Link: a raw href bypasses HashRouter and 404s under the
               /amplibet/ Pages base path. */}
-          <Link to="/login" className="inline-block bg-[#4F44E0] hover:bg-[#3832A0] text-white px-6 py-2 rounded-md">
+          <Link to="/login" className="inline-block bg-brand hover:bg-brand-dark text-white px-6 py-2 rounded-md">
             Log In
           </Link>
         </div>
@@ -115,7 +89,7 @@ const MyBetsPage: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-[#1B3B6F] rounded-lg p-4">
+        <div className="bg-surface rounded-lg p-4">
           <div className="flex items-center space-x-3">
             <Clock className="text-yellow-400" size={24} />
             <div>
@@ -125,24 +99,24 @@ const MyBetsPage: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-[#1B3B6F] rounded-lg p-4">
+        <div className="bg-surface rounded-lg p-4">
           <div className="flex items-center space-x-3">
-            <CheckCircle className="text-green-400" size={24} />
+            <CheckCircle className="text-accent" size={24} />
             <div>
               <p className="text-gray-400 text-sm">Won Bets</p>
-              <p className="text-2xl font-bold text-green-400">
+              <p className="text-2xl font-bold text-accent">
                 {settledBets.filter(bet => bet.status === 'won').length}
               </p>
             </div>
           </div>
         </div>
         
-        <div className="bg-[#1B3B6F] rounded-lg p-4">
+        <div className="bg-surface rounded-lg p-4">
           <div className="flex items-center space-x-3">
-            <DollarSign className="text-green-400" size={24} />
+            <DollarSign className="text-accent" size={24} />
             <div>
               <p className="text-gray-400 text-sm">Total Winnings</p>
-              <p className="text-2xl font-bold text-green-400">
+              <p className="text-2xl font-bold text-accent">
                 ${settledBets
                   .filter(bet => bet.status === 'won')
                   .reduce((sum, bet) => sum + (bet.actualPayout || 0), 0)
@@ -166,8 +140,8 @@ const MyBetsPage: React.FC = () => {
               onClick={() => setFilter(filterOption as any)}
               className={`px-3 py-1 rounded-md text-sm capitalize transition-colors ${
                 filter === filterOption
-                  ? 'bg-[#4F44E0] text-white'
-                  : 'bg-[#1B3B6F] text-gray-300 hover:bg-[#2A4A7F]'
+                  ? 'bg-brand text-white'
+                  : 'bg-surface text-gray-300 hover:bg-raised'
               }`}
             >
               {filterOption}
@@ -178,7 +152,7 @@ const MyBetsPage: React.FC = () => {
 
       {/* Bets List */}
       {filteredBets.length === 0 ? (
-        <div className="bg-[#1B3B6F] rounded-lg p-8 text-center">
+        <div className="bg-surface rounded-lg p-8 text-center">
           <div className="text-gray-400 mb-4">
             {filter === 'all' ? 'No bets found' : `No ${filter} bets found`}
           </div>
@@ -191,7 +165,7 @@ const MyBetsPage: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {filteredBets.map((bet) => (
-            <div key={bet.id} className="bg-[#1B3B6F] rounded-lg p-4">
+            <div key={bet.id} className="bg-surface rounded-lg p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
@@ -226,8 +200,8 @@ const MyBetsPage: React.FC = () => {
                         {bet.status === 'pending' ? 'Potential' : 'Actual'} Payout: 
                       </span>
                       <span className={`font-medium ${
-                        bet.status === 'won' ? 'text-green-400' : 
-                        bet.status === 'lost' ? 'text-red-400' : 'text-white'
+                        bet.status === 'won' ? 'text-accent' : 
+                        bet.status === 'lost' ? 'text-danger' : 'text-white'
                       }`}>
                         ${bet.status === 'pending' 
                           ? bet.potentialPayout?.toFixed(2) 
@@ -249,9 +223,11 @@ const MyBetsPage: React.FC = () => {
       )}
 
       {/* Demo Notice */}
-      <div className="mt-8 p-4 bg-[#13294B] rounded-lg border border-[#1B3B6F]">
+      <div className="mt-8 p-4 bg-ink rounded-lg border border-surface">
         <p className="text-xs text-gray-400 text-center">
-          🎯 Demo Mode: Bets are automatically settled after 30 seconds with simulated outcomes for demonstration purposes.
+          🎯 Demo Mode: settle pending bets from the{' '}
+          <Link to="/results" className="text-grape hover:underline">Results</Link> page —
+          outcomes are simulated from each selection's odds.
         </p>
       </div>
     </div>

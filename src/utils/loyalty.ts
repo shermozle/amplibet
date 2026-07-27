@@ -43,7 +43,7 @@ export const TIERS: readonly Tier[] = [
   { name: 'Bronze', threshold: 0, textClass: 'text-[#CD7F32]', bgClass: 'bg-[#CD7F32]' },
   { name: 'Silver', threshold: 1_000, textClass: 'text-[#C0C0C0]', bgClass: 'bg-[#C0C0C0]' },
   { name: 'Gold', threshold: 5_000, textClass: 'text-[#FFD700]', bgClass: 'bg-[#FFD700]' },
-  { name: 'Platinum', threshold: 20_000, textClass: 'text-[#50E3C2]', bgClass: 'bg-[#50E3C2]' }
+  { name: 'Platinum', threshold: 20_000, textClass: 'text-paper', bgClass: 'bg-paper' }
 ];
 
 export const tierFor = (points: number): Tier => {

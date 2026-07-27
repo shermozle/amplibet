@@ -16,7 +16,8 @@ export const sportIcons = {
   mls: <span>MLS</span>,
   brazil: <span>BR</span>,
   jleague: <span>JL</span>,
-  racing: <span>RC</span>
+  racing: <span>RC</span>,
+  esports: <span>ES</span>
 };
 export const mockSports = [{
   id: 'afl',
@@ -98,6 +99,11 @@ export const mockSports = [{
   name: 'J League',
   icon: sportIcons.jleague,
   bgColor: 'bg-green-600'
+}, {
+  id: 'esports',
+  name: 'Esports',
+  icon: sportIcons.esports,
+  bgColor: 'bg-grape'
 }];
 export const mockRaces = [{
   id: 'r1',
@@ -337,10 +343,133 @@ export const mockTennisEvents = [{
     draw: null
   }
 }];
+// Esports fixtures: same shape as every other head-to-head event, so SportPage,
+// EventPage and the bet slip handle them with no special casing.
+export const mockEsportsEvents = [{
+  id: 'es1',
+  sportId: 'esports',
+  leagueId: 'lco-split-2',
+  leagueName: 'LCO Split 2',
+  homeTeam: 'Sydney Drop Bears',
+  awayTeam: 'Melbourne Order',
+  startTime: '7:00 PM',
+  day: 'Today',
+  markets: 14,
+  odds: { home: 1.55, away: 2.45, draw: null }
+}, {
+  id: 'es2',
+  sportId: 'esports',
+  leagueId: 'lco-split-2',
+  leagueName: 'LCO Split 2',
+  homeTeam: 'Chiefs Esports Club',
+  awayTeam: 'Ground Zero Gaming',
+  startTime: '8:30 PM',
+  day: 'Today',
+  markets: 14,
+  odds: { home: 1.30, away: 3.40, draw: null }
+}, {
+  id: 'es3',
+  sportId: 'esports',
+  leagueId: 'cs2-oceania-masters',
+  leagueName: 'CS2 Oceania Masters',
+  homeTeam: 'Rooster',
+  awayTeam: 'Vertex',
+  startTime: '6:15 PM',
+  day: 'Friday',
+  markets: 9,
+  odds: { home: 2.10, away: 1.72, draw: null }
+}];
+
+// Race cards. Races are not head-to-head events — a card has a field of runners,
+// each with win odds — so they live outside allEvents() and have their own pages
+// and lookup. The bet slip still works unchanged: a runner selection becomes a
+// Bet whose eventId is the race id.
+export interface RaceRunner {
+  number: number;
+  name: string;
+  odds: number;
+}
+
+export interface RaceEvent {
+  id: string;
+  venue: string;
+  raceNumber: number;
+  startTime: string;
+  day: string;
+  distance: string;
+  runners: RaceRunner[];
+}
+
+export const mockRaceEvents: RaceEvent[] = [{
+  id: 'r1',
+  venue: 'Addington',
+  raceNumber: 10,
+  startTime: '3:45 PM',
+  day: 'Today',
+  distance: '2600m',
+  runners: [
+    { number: 1, name: 'Midnight Reactor', odds: 2.40 },
+    { number: 2, name: 'Copper Sky', odds: 3.80 },
+    { number: 3, name: 'Session Replay', odds: 5.50 },
+    { number: 4, name: 'Harbour Mist', odds: 8.00 },
+    { number: 5, name: 'Dashboard Dan', odds: 12.0 },
+    { number: 6, name: 'Southerly Buster', odds: 21.0 }
+  ]
+}, {
+  id: 'r2',
+  venue: 'Albion Park',
+  raceNumber: 6,
+  startTime: '4:10 PM',
+  day: 'Today',
+  distance: '1660m',
+  runners: [
+    { number: 1, name: 'Retention Curve', odds: 1.95 },
+    { number: 2, name: 'Golden Gully', odds: 4.20 },
+    { number: 3, name: 'Night Parade', odds: 6.00 },
+    { number: 4, name: 'False Start', odds: 9.50 },
+    { number: 5, name: 'Cohort King', odds: 15.0 }
+  ]
+}, {
+  // Ids here must line up with the legacy mockRaces ticker entries for the same
+  // venue — the home-page rail links /race/{id} — so Casino is r4 and Mombetsu
+  // r5, matching their positions in that list. Kasamatsu (r3) has no card and
+  // falls back to /racing.
+  id: 'r4',
+  venue: 'Casino',
+  raceNumber: 7,
+  startTime: '4:38 PM',
+  day: 'Today',
+  distance: '1400m',
+  runners: [
+    { number: 1, name: 'Northern Signal', odds: 2.80 },
+    { number: 2, name: 'Funnel Vision', odds: 3.10 },
+    { number: 3, name: 'Rainmaker Road', odds: 4.60 },
+    { number: 4, name: 'Quiet Achiever', odds: 11.0 },
+    { number: 5, name: 'Last Drinks', odds: 17.0 },
+    { number: 6, name: 'Border Collie Blue', odds: 26.0 }
+  ]
+}, {
+  id: 'r5',
+  venue: 'Mombetsu',
+  raceNumber: 4,
+  startTime: '5:05 PM',
+  day: 'Today',
+  distance: '1200m',
+  runners: [
+    { number: 1, name: 'Snow Country', odds: 2.10 },
+    { number: 2, name: 'Ezo Wind', odds: 3.50 },
+    { number: 3, name: 'Stampede Path', odds: 7.00 },
+    { number: 4, name: 'Amber Field', odds: 10.0 },
+    { number: 5, name: 'North Star Drift', odds: 19.0 }
+  ]
+}];
+
+export const getRaceById = (raceId: string) => mockRaceEvents.find(race => race.id === raceId);
+
 export const getSportById = (sportId: string) => mockSports.find(sport => sport.id === sportId);
 
-// Every event across every catalogue.
-export const allEvents = () => [...mockSportEvents, ...mockAFLWEvents, ...mockTennisEvents];
+// Every head-to-head event across every catalogue (races excluded — see above).
+export const allEvents = () => [...mockSportEvents, ...mockAFLWEvents, ...mockTennisEvents, ...mockEsportsEvents];
 
 export const getEventById = (eventId: string) => allEvents().find(event => event.id === eventId);
 

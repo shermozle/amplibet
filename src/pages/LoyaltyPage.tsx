@@ -29,10 +29,10 @@ const LoyaltyPage: React.FC = () => {
   }, [user, tier.name, points]);
 
   if (!isAuthenticated || !user) {
-    return <div className="bg-[#13294B] min-h-screen text-white p-8 text-center">
-        <h1 className="text-2xl font-bold text-[#50E3C2] mb-2">AmpliBet Rewards</h1>
+    return <div className="bg-ink min-h-screen text-white p-8 text-center">
+        <h1 className="text-2xl font-bold text-accent mb-2">AmpliBet Rewards</h1>
         <p className="text-gray-400 mb-4">Sign in to see your card and points balance.</p>
-        <Link to="/login" className="text-[#9B7BFD] hover:underline">Log in</Link>
+        <Link to="/login" className="text-grape hover:underline">Log in</Link>
       </div>;
   }
 
@@ -43,8 +43,8 @@ const LoyaltyPage: React.FC = () => {
     return totals;
   }, {});
 
-  return <div className="bg-[#13294B] min-h-screen text-white">
-      <div className="bg-gradient-to-r from-[#1B3B6F] to-[#13294B] border-b border-[#13294B] p-4">
+  return <div className="bg-ink min-h-screen text-white">
+      <div className="bg-gradient-to-r from-surface to-ink border-b border-ink p-4">
         <nav aria-label="Breadcrumb" className="flex items-center text-sm text-gray-400 mb-4">
           <Link to="/home" className="hover:text-white flex items-center">
             <HomeIcon size={14} className="mr-1" aria-hidden="true" />
@@ -55,20 +55,20 @@ const LoyaltyPage: React.FC = () => {
         </nav>
         <div className="flex items-center">
           <AwardIcon size={24} className={`mr-3 ${tier.textClass}`} aria-hidden="true" />
-          <h1 className="text-2xl font-bold text-[#50E3C2]">AmpliBet Rewards</h1>
+          <h1 className="text-2xl font-bold text-accent">AmpliBet Rewards</h1>
         </div>
       </div>
 
       <div className="p-4 grid gap-4 lg:grid-cols-2">
         {/* The card. Scannable at any venue — this is the physical link between a
             person's online account and their over-the-counter activity. */}
-        <section className="bg-gradient-to-br from-[#2A4E8D] to-[#1B3B6F] rounded-lg p-5 border border-[#3A5E9D]">
+        <section className="bg-gradient-to-br from-raised to-surface rounded-lg p-5 border border-raised-light">
           <div className="flex justify-between items-start mb-6">
             <div>
               <div className="text-xs text-gray-300 uppercase tracking-wider">Member</div>
               <div className="text-lg font-semibold">{user.firstName} {user.lastName}</div>
             </div>
-            <div className={`px-3 py-1 rounded-full text-xs font-bold text-[#13294B] ${tier.bgClass}`}>
+            <div className={`px-3 py-1 rounded-full text-xs font-bold text-ink ${tier.bgClass}`}>
               {tier.name.toUpperCase()}
             </div>
           </div>
@@ -77,7 +77,7 @@ const LoyaltyPage: React.FC = () => {
             <Barcode value={user.id} height={56} className="w-full h-14" />
             {/* The human-readable ID under the bars is required by Code 39
                 convention and is what call centre staff read back. */}
-            <div className="text-center text-[#13294B] font-mono text-sm tracking-[0.2em] mt-2">
+            <div className="text-center text-ink font-mono text-sm tracking-[0.2em] mt-2">
               {user.id}
             </div>
           </div>
@@ -88,9 +88,9 @@ const LoyaltyPage: React.FC = () => {
         </section>
 
         {/* Balance and tier progress. */}
-        <section className="bg-[#1B3B6F] rounded-lg p-5">
+        <section className="bg-surface rounded-lg p-5">
           <div className="text-xs text-gray-400 uppercase tracking-wider mb-1">Points balance</div>
-          <div className="text-4xl font-bold text-[#50E3C2] mb-4">{points.toLocaleString()}</div>
+          <div className="text-4xl font-bold text-accent mb-4">{points.toLocaleString()}</div>
 
           {nextTier ? (
             <>
@@ -101,7 +101,7 @@ const LoyaltyPage: React.FC = () => {
                 </span>
               </div>
               <div
-                className="h-2 bg-[#13294B] rounded-full overflow-hidden"
+                className="h-2 bg-ink rounded-full overflow-hidden"
                 role="progressbar"
                 aria-valuenow={Math.round(progress * 100)}
                 aria-valuemin={0}
@@ -112,10 +112,10 @@ const LoyaltyPage: React.FC = () => {
               </div>
             </>
           ) : (
-            <p className="text-sm text-[#50E3C2]">Top tier reached. Nice work.</p>
+            <p className="text-sm text-accent">Top tier reached. Nice work.</p>
           )}
 
-          <div className="mt-5 pt-4 border-t border-[#13294B]">
+          <div className="mt-5 pt-4 border-t border-ink">
             <div className="text-xs text-gray-400 uppercase tracking-wider mb-2">Tiers</div>
             <ul className="space-y-1 text-sm">
               {TIERS.map(candidate => (
@@ -134,7 +134,7 @@ const LoyaltyPage: React.FC = () => {
         </section>
 
         {/* Where the points came from. */}
-        <section className="bg-[#1B3B6F] rounded-lg p-5 lg:col-span-2">
+        <section className="bg-surface rounded-lg p-5 lg:col-span-2">
           <h2 className="font-semibold mb-3">Earned by channel</h2>
           {Object.keys(bySurface).length === 0 ? (
             <p className="text-sm text-gray-400">
@@ -145,7 +145,7 @@ const LoyaltyPage: React.FC = () => {
               {(Object.entries(bySurface) as Array<[Surface, number]>).map(([surface, total]) => {
                 const { label, Icon } = SURFACE_LABELS[surface];
                 return (
-                  <div key={surface} className="bg-[#2A4E8D] rounded p-3">
+                  <div key={surface} className="bg-raised rounded p-3">
                     <div className="flex items-center text-xs text-gray-300 mb-1">
                       <Icon size={14} className="mr-1" aria-hidden="true" />
                       <span>{label}</span>
@@ -161,7 +161,7 @@ const LoyaltyPage: React.FC = () => {
           {ledger.length === 0 ? (
             <p className="text-sm text-gray-400">Nothing to show yet.</p>
           ) : (
-            <ul className="divide-y divide-[#13294B]">
+            <ul className="divide-y divide-ink">
               {ledger.slice(0, 20).map(entry => {
                 const { label, Icon } = SURFACE_LABELS[entry.surface];
                 return (
@@ -175,7 +175,7 @@ const LoyaltyPage: React.FC = () => {
                         <span>{new Date(entry.earnedAt).toLocaleString()}</span>
                       </div>
                     </div>
-                    <div className="text-[#50E3C2] font-semibold whitespace-nowrap">
+                    <div className="text-accent font-semibold whitespace-nowrap">
                       +{entry.points.toLocaleString()}
                     </div>
                   </li>

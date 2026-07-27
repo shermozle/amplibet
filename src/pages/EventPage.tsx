@@ -30,10 +30,10 @@ const EventPage: React.FC = () => {
     }
   }, [event]);
   if (!event) {
-    return <div className="bg-[#13294B] min-h-screen text-white p-8 text-center">
-        <h1 className="text-2xl font-bold text-[#50E3C2] mb-2">Event not found</h1>
+    return <div className="bg-ink min-h-screen text-white p-8 text-center">
+        <h1 className="text-2xl font-bold text-accent mb-2">Event not found</h1>
         <p className="text-gray-400 mb-4">This market is no longer listed.</p>
-        <Link to="/home" className="text-[#9B7BFD] hover:underline">Back to home</Link>
+        <Link to="/home" className="text-grape hover:underline">Back to home</Link>
       </div>;
   }
   const handleBetSelection = (team: string, odds: number) => {
@@ -48,8 +48,8 @@ const EventPage: React.FC = () => {
       odds: odds
     });
   };
-  return <div className="bg-[#13294B] min-h-screen text-white">
-      <div className="bg-gradient-to-r from-[#1B3B6F] to-[#13294B] border-b border-[#13294B] p-4">
+  return <div className="bg-ink min-h-screen text-white">
+      <div className="bg-gradient-to-r from-surface to-ink border-b border-ink p-4">
         {/* Breadcrumb and heading derive from the event's own sport. They used to
             be hardcoded to AFLW, so every event — NRL, MLB, tennis — claimed to
             be Australian Rules and linked to the wrong sport page. */}
@@ -71,12 +71,12 @@ const EventPage: React.FC = () => {
           <div className={`w-8 h-8 ${sport?.bgColor ?? 'bg-blue-600'} rounded-full flex items-center justify-center mr-3 text-xs`}>
             {sport?.icon ?? '🏆'}
           </div>
-          <h1 className="text-2xl font-bold text-[#50E3C2]">{sport?.name ?? event.leagueName}</h1>
+          <h1 className="text-2xl font-bold text-accent">{sport?.name ?? event.leagueName}</h1>
         </div>
       </div>
       <div className="p-4">
-        <div className="bg-[#1B3B6F] rounded-lg overflow-hidden mb-4">
-          <div className="p-4 border-b border-[#13294B]">
+        <div className="bg-surface rounded-lg overflow-hidden mb-4">
+          <div className="p-4 border-b border-ink">
             <div className="flex justify-between items-center">
               <h2 className="font-semibold text-lg">
                 {event.homeTeam} v {event.awayTeam}
@@ -93,23 +93,23 @@ const EventPage: React.FC = () => {
           <div className="p-4">
             <h3 className="font-medium mb-3">Match Result</h3>
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <button className={`flex items-center justify-between p-3 rounded ${selectedTeam === event.homeTeam ? 'bg-[#4F44E0]' : 'bg-[#2A4E8D] hover:bg-[#3A5E9D]'}`} onClick={() => handleBetSelection(event.homeTeam, event.odds.home)}>
+              <button className={`flex items-center justify-between p-3 rounded ${selectedTeam === event.homeTeam ? 'bg-brand' : 'bg-raised hover:bg-raised-light'}`} onClick={() => handleBetSelection(event.homeTeam, event.odds.home)}>
                 <span>{event.homeTeam}</span>
                 <span className="font-bold">{event.odds.home.toFixed(2)}</span>
               </button>
-              <button className={`flex items-center justify-between p-3 rounded ${selectedTeam === event.awayTeam ? 'bg-[#4F44E0]' : 'bg-[#2A4E8D] hover:bg-[#3A5E9D]'}`} onClick={() => handleBetSelection(event.awayTeam, event.odds.away)}>
+              <button className={`flex items-center justify-between p-3 rounded ${selectedTeam === event.awayTeam ? 'bg-brand' : 'bg-raised hover:bg-raised-light'}`} onClick={() => handleBetSelection(event.awayTeam, event.odds.away)}>
                 <span>{event.awayTeam}</span>
                 <span className="font-bold">{event.odds.away.toFixed(2)}</span>
               </button>
             </div>
-            <div className="border-t border-[#13294B] pt-4">
+            <div className="border-t border-ink pt-4">
               <h3 className="font-medium mb-3">Handicap</h3>
               <div className="grid grid-cols-2 gap-4">
-                <button className="flex items-center justify-between p-3 rounded bg-[#2A4E8D] hover:bg-[#3A5E9D]">
+                <button className="flex items-center justify-between p-3 rounded bg-raised hover:bg-raised-light">
                   <span>{event.homeTeam} (-6.5)</span>
                   <span className="font-bold">1.90</span>
                 </button>
-                <button className="flex items-center justify-between p-3 rounded bg-[#2A4E8D] hover:bg-[#3A5E9D]">
+                <button className="flex items-center justify-between p-3 rounded bg-raised hover:bg-raised-light">
                   <span>{event.awayTeam} (+6.5)</span>
                   <span className="font-bold">1.90</span>
                 </button>
@@ -117,8 +117,8 @@ const EventPage: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="bg-[#1B3B6F] rounded-lg overflow-hidden">
-          <div className="p-4 border-b border-[#13294B]">
+        <div className="bg-surface rounded-lg overflow-hidden">
+          <div className="p-4 border-b border-ink">
             <h2 className="font-semibold">Other Markets</h2>
           </div>
           <div className="p-4">
@@ -126,11 +126,11 @@ const EventPage: React.FC = () => {
               <div>
                 <h3 className="font-medium mb-2">Total Match Points</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <button className="flex items-center justify-between p-3 rounded bg-[#2A4E8D] hover:bg-[#3A5E9D]">
+                  <button className="flex items-center justify-between p-3 rounded bg-raised hover:bg-raised-light">
                     <span>Over 138.5</span>
                     <span className="font-bold">1.90</span>
                   </button>
-                  <button className="flex items-center justify-between p-3 rounded bg-[#2A4E8D] hover:bg-[#3A5E9D]">
+                  <button className="flex items-center justify-between p-3 rounded bg-raised hover:bg-raised-light">
                     <span>Under 138.5</span>
                     <span className="font-bold">1.90</span>
                   </button>
@@ -139,11 +139,11 @@ const EventPage: React.FC = () => {
               <div>
                 <h3 className="font-medium mb-2">First Team to Score</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <button className="flex items-center justify-between p-3 rounded bg-[#2A4E8D] hover:bg-[#3A5E9D]">
+                  <button className="flex items-center justify-between p-3 rounded bg-raised hover:bg-raised-light">
                     <span>{event.homeTeam}</span>
                     <span className="font-bold">1.85</span>
                   </button>
-                  <button className="flex items-center justify-between p-3 rounded bg-[#2A4E8D] hover:bg-[#3A5E9D]">
+                  <button className="flex items-center justify-between p-3 rounded bg-raised hover:bg-raised-light">
                     <span>{event.awayTeam}</span>
                     <span className="font-bold">1.95</span>
                   </button>
@@ -152,11 +152,11 @@ const EventPage: React.FC = () => {
               <div>
                 <h3 className="font-medium mb-2">Race to 20 Points</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <button className="flex items-center justify-between p-3 rounded bg-[#2A4E8D] hover:bg-[#3A5E9D]">
+                  <button className="flex items-center justify-between p-3 rounded bg-raised hover:bg-raised-light">
                     <span>{event.homeTeam}</span>
                     <span className="font-bold">1.72</span>
                   </button>
-                  <button className="flex items-center justify-between p-3 rounded bg-[#2A4E8D] hover:bg-[#3A5E9D]">
+                  <button className="flex items-center justify-between p-3 rounded bg-raised hover:bg-raised-light">
                     <span>{event.awayTeam}</span>
                     <span className="font-bold">2.10</span>
                   </button>
