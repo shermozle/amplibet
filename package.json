@@ -1,11 +1,13 @@
 {
-  "name": "magic-patterns-vite-template",
-  "version": "0.0.1",
+  "name": "amplibet",
+  "version": "1.0.0",
   "private": true,
+  "description": "AmpliBet — sports betting site mockup for Amplitude platform demonstrations",
   "type": "module",
   "scripts": {
     "dev": "npx vite",
     "build": "npx vite build",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "preview": "npx vite preview"
   },

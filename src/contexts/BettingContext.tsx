@@ -1,16 +1,23 @@
 import React, { useState, createContext, useContext, useEffect, ReactNode } from 'react';
-import { trackBetAdded, trackBetRemoved, trackBetUpdated, trackBetPlaced } from '../utils/analytics';
+import { trackBetAdded, trackBetRemoved, trackBetUpdated, trackBetPlaced, trackBetPlacementFailed } from '../utils/analytics';
 import { useAuth } from './AuthContext';
 import { useWallet } from './WalletContext';
-interface Bet {
+// A selection sitting in the bet slip. Stake is optional until the user types one.
+export interface Bet {
   id: string;
   eventId: string;
   selection: string;
   odds: number;
   stake?: number;
-  placedAt?: Date;
-  status?: 'pending' | 'won' | 'lost';
-  potentialPayout?: number;
+}
+// A bet that has been placed. Placement guarantees a stake, a timestamp, a
+// status and a potential payout, so these are required here rather than
+// optional — which is what let `undefined` leak into the history UI.
+export interface PlacedBet extends Bet {
+  stake: number;
+  placedAt: Date;
+  status: 'pending' | 'won' | 'lost';
+  potentialPayout: number;
   actualPayout?: number;
   settledAt?: Date;
 }
@@ -23,7 +30,7 @@ interface BettingContextType {
   settleBet: (betId: string, status: 'won' | 'lost', actualPayout?: number) => void;
   totalStake: number;
   estimatedPayout: number;
-  betHistory: Bet[];
+  betHistory: PlacedBet[];
   isPlacingBet: boolean;
 }
 const BettingContext = createContext<BettingContextType | undefined>(undefined);
@@ -33,7 +40,7 @@ export const BettingProvider: React.FC<{
   children
 }) => {
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
-  const [betHistory, setBetHistory] = useState<Bet[]>([]);
+  const [betHistory, setBetHistory] = useState<PlacedBet[]>([]);
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const { user, isAuthenticated } = useAuth();
   const { deductFunds, balance } = useWallet();
@@ -107,41 +114,49 @@ export const BettingProvider: React.FC<{
     // Track bet stake updated in analytics
     trackBetUpdated(betId, stake);
   };
+  // Every rejection path emits 'Bet Placement Failed' before throwing, so the
+  // error states the demo exists to showcase are visible in Amplitude.
+  const fail = (reason: string): never => {
+    trackBetPlacementFailed(reason, selectedBets, totalStake);
+    throw new Error(reason);
+  };
+
   const placeBets = async (): Promise<void> => {
     if (selectedBets.length === 0) return;
     if (!isAuthenticated) {
-      throw new Error('Must be logged in to place bets');
+      fail('Must be logged in to place bets');
     }
-    
+
     // Check if user has sufficient balance
     if (totalStake > balance) {
-      throw new Error('Insufficient funds. Please deposit more money to place this bet.');
+      fail('Insufficient funds. Please deposit more money to place this bet.');
     }
-    
+
     // Check if all bets have stakes
     const betsWithoutStake = selectedBets.filter(bet => !bet.stake || bet.stake <= 0);
     if (betsWithoutStake.length > 0) {
-      throw new Error('Please set stake amounts for all bets.');
+      fail('Please set stake amounts for all bets.');
     }
-    
+
     setIsPlacingBet(true);
-    
+
     try {
       // Deduct funds from wallet
       const success = deductFunds(totalStake, `Bet on ${selectedBets.length} selection${selectedBets.length > 1 ? 's' : ''}`);
       if (!success) {
-        throw new Error('Failed to deduct funds. Please try again.');
+        fail('Failed to deduct funds. Please try again.');
       }
-      
+
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Track bet placed in analytics
       trackBetPlaced(selectedBets, totalStake, estimatedPayout);
-      
+
       // Add completed bets to history with timestamp and outcome
-      const completedBets = selectedBets.map(bet => ({
+      const completedBets: PlacedBet[] = selectedBets.map(bet => ({
         ...bet,
+        stake: bet.stake ?? 0,
         placedAt: new Date(),
         status: 'pending' as const,
         potentialPayout: bet.stake ? bet.stake * bet.odds : 0
@@ -157,7 +172,7 @@ export const BettingProvider: React.FC<{
     }
   };
   
-  const settleBet = (betId: string, status: 'won' | 'lost', actualPayout: number = 0): void => {
+  const settleBet = (betId: string, status: 'won' | 'lost', actualPayout = 0): void => {
     setBetHistory(prevHistory => 
       prevHistory.map(bet => 
         bet.id === betId 

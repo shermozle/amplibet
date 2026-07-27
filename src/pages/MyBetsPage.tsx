@@ -1,21 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useBetting } from '../contexts/BettingContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useWallet } from '../contexts/WalletContext';
 import { Clock, CheckCircle, XCircle, DollarSign, Calendar, Filter } from 'lucide-react';
-
-interface BetWithDetails {
-  id: string;
-  eventId: string;
-  selection: string;
-  odds: number;
-  stake: number;
-  placedAt: Date;
-  status: 'pending' | 'won' | 'lost';
-  potentialPayout: number;
-  actualPayout?: number;
-  settledAt?: Date;
-}
 
 const MyBetsPage: React.FC = () => {
   const { betHistory, settleBet } = useBetting();
@@ -108,9 +96,11 @@ const MyBetsPage: React.FC = () => {
         <h1 className="text-2xl font-bold text-white mb-4">My Bets</h1>
         <div className="bg-[#1B3B6F] rounded-lg p-8">
           <p className="text-gray-300 mb-4">Please log in to view your bet history</p>
-          <a href="/login" className="bg-[#4F44E0] hover:bg-[#3832A0] text-white px-6 py-2 rounded-md">
+          {/* Must be a Link: a raw href bypasses HashRouter and 404s under the
+              /amplibet/ Pages base path. */}
+          <Link to="/login" className="inline-block bg-[#4F44E0] hover:bg-[#3832A0] text-white px-6 py-2 rounded-md">
             Log In
-          </a>
+          </Link>
         </div>
       </div>
     );

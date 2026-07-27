@@ -1,4 +1,3 @@
-import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import HomePage from './pages/HomePage';
@@ -11,7 +10,6 @@ import SignupPage from './pages/SignupPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { BettingProvider } from './contexts/BettingContext';
 import { WalletProvider } from './contexts/WalletContext';
-import { initializeAnalytics } from './utils/analytics';
 
 function RootRoute() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -20,10 +18,6 @@ function RootRoute() {
 }
 
 export function App() {
-  useEffect(() => {
-    initializeAnalytics();
-  }, []);
-
   return <AuthProvider>
       <WalletProvider>
         <BettingProvider>

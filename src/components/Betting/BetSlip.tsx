@@ -132,8 +132,11 @@ const BetSlip: React.FC = () => {
             ${totalStake.toFixed(2)}
           </span>
         </div>
+        {/* Singles-only slip: this is the sum of each selection's individual
+            return, not a combined multi. Labelled explicitly so it is not
+            mistaken for parlay odds. */}
         <div className="flex justify-between text-xs mb-2">
-          <span>EST. PAYOUT</span>
+          <span>EST. RETURN{selectedBets.length > 1 ? ' (SINGLES)' : ''}</span>
           <span className="text-[#50E3C2]">${estimatedPayout.toFixed(2)}</span>
         </div>
         {showSuccessMessage && (

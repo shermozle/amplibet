@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { trackUserSignup, trackUserLogin, trackUserLogout, setUserProperties } from '../utils/analytics';
+import { trackUserSignup, trackUserLogin, trackUserLogout } from '../utils/analytics';
 
 export interface User {
   id: string;
@@ -89,7 +89,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  // Mock login: the password is intentionally unused — any credentials succeed.
+  const login = async (email: string, _password: string): Promise<void> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
@@ -98,7 +99,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Mock authentication - accept any email/password combination
       const user: User = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).slice(2, 11),
         email,
         firstName: email.split('@')[0].split('.')[0] || 'User',
         lastName: email.split('@')[0].split('.')[1] || 'Demo',
@@ -133,7 +134,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Create new user
       const user: User = {
         ...userData,
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).slice(2, 11),
         createdAt: new Date(),
       };
 
@@ -165,11 +166,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }
     
-    // Remove user from localStorage
+    // Remove user from localStorage, along with every per-user key. These are
+    // suffixed with the user id, so an unsuffixed removeItem('amplibet_bets')
+    // silently leaves the slip and history behind to be restored on next login.
     localStorage.removeItem('amplibet_user');
-    // Also clear any betting data associated with the user
-    localStorage.removeItem('amplibet_bets');
-    
+    if (state.user) {
+      for (const prefix of ['amplibet_bets', 'amplibet_history', 'amplibet_balance', 'amplibet_transactions']) {
+        localStorage.removeItem(`${prefix}_${state.user.id}`);
+      }
+    }
+
     dispatch({ type: 'LOGOUT' });
   };
 

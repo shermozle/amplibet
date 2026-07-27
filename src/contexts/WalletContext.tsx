@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import { trackDeposit, trackDepositFailed } from '../utils/analytics';
 
 export interface Transaction {
   id: string;
@@ -121,9 +122,11 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   }, [state.balance, user, isAuthenticated]);
 
-  // Save transactions to localStorage whenever they change
+  // Save transactions to localStorage whenever they change. Note there is no
+  // length guard: guarding on `length > 0` means an emptied list is never
+  // written, leaving stale transactions in storage to be reloaded later.
   useEffect(() => {
-    if (isAuthenticated && user && state.transactions.length > 0) {
+    if (isAuthenticated && user) {
       localStorage.setItem(`amplibet_transactions_${user.id}`, JSON.stringify(state.transactions));
     }
   }, [state.transactions, user, isAuthenticated]);
@@ -145,7 +148,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       }
 
       const transaction: Transaction = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).slice(2, 11),
         type: 'deposit',
         amount,
         description: `Deposit via card ending in ${cardInfo.cardNumber.slice(-4)}`,
@@ -154,14 +157,13 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       };
 
       // Track the deposit in Amplitude
-      const { trackDeposit } = await import('../utils/analytics');
-      trackDeposit(user.id, amount, {
-        cardNumber: cardInfo.cardNumber,
-        cardholderName: cardInfo.cardholderName
-      });
+      trackDeposit(user.id, amount, { cardNumber: cardInfo.cardNumber });
 
       dispatch({ type: 'DEPOSIT_SUCCESS', payload: { amount, transaction } });
     } catch (error) {
+      // Record the failure. Without this the simulated 5% payment failure — a
+      // core part of the error-state demo — produces no Amplitude event at all.
+      trackDepositFailed(amount, (error as Error).message, cardInfo.cardNumber);
       dispatch({ type: 'SET_PROCESSING', payload: false });
       throw error;
     }
@@ -177,7 +179,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
 
     const transaction: Transaction = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).slice(2, 11),
       type: 'bet',
       amount,
       description,
@@ -195,7 +197,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
 
     const transaction: Transaction = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).slice(2, 11),
       type: 'payout',
       amount,
       description,

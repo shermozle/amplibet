@@ -1,4 +1,3 @@
-import React from 'react';
 // Sport icons as JSX elements
 export const sportIcons = {
   afl: <span>AFL</span>,
@@ -338,21 +337,21 @@ export const mockTennisEvents = [{
     draw: null
   }
 }];
-export const getEventById = (eventId: string) => {
-  const allEvents = [...mockSportEvents, ...mockAFLWEvents, ...mockTennisEvents];
-  return allEvents.find(event => event.id === eventId);
-};
-export const getEventsByType = (type: string) => {
-  switch (type) {
-    case 'afl':
-      return mockSportEvents.filter(event => event.sportId === 'afl');
-    case 'nrl':
-      return mockSportEvents.filter(event => event.sportId === 'nrl');
-    case 'aflw':
-      return mockAFLWEvents;
-    case 'tennis':
-      return mockTennisEvents;
-    default:
-      return mockSportEvents;
-  }
+export const getSportById = (sportId: string) => mockSports.find(sport => sport.id === sportId);
+
+// Every event across every catalogue.
+export const allEvents = () => [...mockSportEvents, ...mockAFLWEvents, ...mockTennisEvents];
+
+export const getEventById = (eventId: string) => allEvents().find(event => event.id === eventId);
+
+// Events actually belonging to a sport. Returns an empty array for a sport with
+// no fixtures rather than silently falling back to an unrelated list.
+export const getEventsBySport = (sportId: string) => allEvents().filter(event => event.sportId === sportId);
+
+// Derive a short badge from a team name, e.g. 'Sydney Swans Women' -> 'SYD'.
+export const teamAbbrev = (teamName: string): string => {
+  const words = teamName.replace(/\bwomen\b/gi, '').trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '???';
+  const source = words[0].length >= 3 ? words[0] : words.join('');
+  return source.slice(0, 3).toUpperCase();
 };

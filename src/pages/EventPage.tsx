@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { HomeIcon, ChevronRightIcon, ClockIcon } from 'lucide-react';
-import { getEventById, mockAFLWEvents } from '../utils/mockData';
+import { getEventById, getSportById } from '../utils/mockData';
 import { useBetting } from '../contexts/BettingContext';
-import { trackPageView, trackEventSelected, trackBetAdded } from '../utils/analytics';
+import { trackPageView, trackEventSelected } from '../utils/analytics';
 const EventPage: React.FC = () => {
   const {
     eventId
   } = useParams<{
     eventId: string;
   }>();
-  const event = getEventById(eventId || '') || mockAFLWEvents[0];
+  // No fallback event: an unknown id previously rendered an unrelated AFLW
+  // fixture, so a broken link looked like a working page and polluted analytics
+  // with a selection the user never made.
+  const event = getEventById(eventId || '');
+  const sport = event ? getSportById(event.sportId) : undefined;
   const {
     addBet
   } = useBetting();
@@ -25,42 +29,49 @@ const EventPage: React.FC = () => {
       trackEventSelected(event.id, event.homeTeam, event.awayTeam, event.sportId);
     }
   }, [event]);
+  if (!event) {
+    return <div className="bg-[#13294B] min-h-screen text-white p-8 text-center">
+        <h1 className="text-2xl font-bold text-[#50E3C2] mb-2">Event not found</h1>
+        <p className="text-gray-400 mb-4">This market is no longer listed.</p>
+        <Link to="/home" className="text-[#9B7BFD] hover:underline">Back to home</Link>
+      </div>;
+  }
   const handleBetSelection = (team: string, odds: number) => {
     setSelectedTeam(team);
     const betId = `${event.id}-${team}`;
-    // Add bet to context
+    // addBet emits the 'Bet Added' event itself — do not track it here as well,
+    // or every selection is double-counted in Amplitude.
     addBet({
       id: betId,
       eventId: event.id,
       selection: team,
       odds: odds
     });
-    // Track bet added
-    trackBetAdded(betId, event.id, team, odds);
   };
   return <div className="bg-[#13294B] min-h-screen text-white">
       <div className="bg-gradient-to-r from-[#1B3B6F] to-[#13294B] border-b border-[#13294B] p-4">
-        <div className="flex items-center text-sm text-gray-400 mb-4">
-          <Link to="/" className="hover:text-white flex items-center">
-            <HomeIcon size={14} className="mr-1" />
+        {/* Breadcrumb and heading derive from the event's own sport. They used to
+            be hardcoded to AFLW, so every event — NRL, MLB, tennis — claimed to
+            be Australian Rules and linked to the wrong sport page. */}
+        <nav aria-label="Breadcrumb" className="flex items-center text-sm text-gray-400 mb-4">
+          <Link to="/home" className="hover:text-white flex items-center">
+            <HomeIcon size={14} className="mr-1" aria-hidden="true" />
             <span>Home</span>
           </Link>
-          <ChevronRightIcon size={14} className="mx-1" />
-          <Link to="/sport/sport" className="hover:text-white">
-            Sport
+          <ChevronRightIcon size={14} className="mx-1" aria-hidden="true" />
+          <Link to={`/sport/${event.sportId}`} className="hover:text-white">
+            {sport?.name ?? event.leagueName}
           </Link>
-          <ChevronRightIcon size={14} className="mx-1" />
-          <Link to="/sport/aflw" className="hover:text-white">
-            Australian Rules
-          </Link>
-          <ChevronRightIcon size={14} className="mx-1" />
-          <span className="text-white">Australia</span>
-        </div>
+          <ChevronRightIcon size={14} className="mx-1" aria-hidden="true" />
+          <span className="text-white" aria-current="page">
+            {event.homeTeam} v {event.awayTeam}
+          </span>
+        </nav>
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center mr-3">
-            🏉
+          <div className={`w-8 h-8 ${sport?.bgColor ?? 'bg-blue-600'} rounded-full flex items-center justify-center mr-3 text-xs`}>
+            {sport?.icon ?? '🏆'}
           </div>
-          <h1 className="text-2xl font-bold text-[#50E3C2]">AFL Womens.</h1>
+          <h1 className="text-2xl font-bold text-[#50E3C2]">{sport?.name ?? event.leagueName}</h1>
         </div>
       </div>
       <div className="p-4">
