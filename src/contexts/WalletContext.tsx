@@ -23,6 +23,12 @@ interface WalletState {
   balance: number;
   transactions: Transaction[];
   isProcessingDeposit: boolean;
+  // Which member this wallet state belongs to, or null before it has been loaded.
+  // The save effect keys off this: a load effect and a save effect both fire in the
+  // commit where `user` appears and the save runs second, so without an ownership
+  // marker in the state itself it writes the still-zero pre-load balance straight
+  // over the stored one, emptying the wallet on every page load.
+  userId: string | null;
 }
 
 interface WalletContextType extends WalletState {
@@ -37,13 +43,14 @@ type WalletAction =
   | { type: 'DEPOSIT_SUCCESS'; payload: { amount: number; transaction: Transaction } }
   | { type: 'DEDUCT_FUNDS'; payload: { amount: number; transaction: Transaction } }
   | { type: 'ADD_PAYOUT'; payload: { amount: number; transaction: Transaction } }
-  | { type: 'LOAD_WALLET_DATA'; payload: { balance: number; transactions: Transaction[] } }
+  | { type: 'LOAD_WALLET_DATA'; payload: { balance: number; transactions: Transaction[]; userId: string } }
   | { type: 'RESET_WALLET' };
 
 const initialState: WalletState = {
   balance: 0,
   transactions: [],
   isProcessingDeposit: false,
+  userId: null,
 };
 
 const walletReducer = (state: WalletState, action: WalletAction): WalletState => {
@@ -74,6 +81,7 @@ const walletReducer = (state: WalletState, action: WalletAction): WalletState =>
         ...state,
         balance: action.payload.balance,
         transactions: action.payload.transactions,
+        userId: action.payload.userId,
       };
     case 'RESET_WALLET':
       return initialState;
@@ -109,27 +117,32 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         }
       }
       
-      dispatch({ type: 'LOAD_WALLET_DATA', payload: { balance, transactions } });
+      dispatch({ type: 'LOAD_WALLET_DATA', payload: { balance, transactions, userId: user.id } });
     } else {
       dispatch({ type: 'RESET_WALLET' });
     }
   }, [user, isAuthenticated]);
 
+  // Only persist once the state provably belongs to the signed-in member. See the
+  // note on WalletState.userId for why the guard cannot just be `isAuthenticated`.
+  const hydrated = state.userId !== null && state.userId === user?.id;
+
   // Save balance to localStorage whenever it changes
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (hydrated && user) {
       localStorage.setItem(`amplibet_balance_${user.id}`, state.balance.toString());
     }
-  }, [state.balance, user, isAuthenticated]);
+  }, [state.balance, hydrated, user]);
 
   // Save transactions to localStorage whenever they change. Note there is no
   // length guard: guarding on `length > 0` means an emptied list is never
-  // written, leaving stale transactions in storage to be reloaded later.
+  // written, leaving stale transactions in storage to be reloaded later. The
+  // hydration check is what stops an empty list overwriting a real one.
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (hydrated && user) {
       localStorage.setItem(`amplibet_transactions_${user.id}`, JSON.stringify(state.transactions));
     }
-  }, [state.transactions, user, isAuthenticated]);
+  }, [state.transactions, hydrated, user]);
 
   const deposit = async (amount: number, cardInfo: CreditCardInfo): Promise<void> => {
     if (!isAuthenticated || !user) {

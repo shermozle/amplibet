@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { SearchIcon, SunIcon, UserIcon, LogOutIcon, ChevronDownIcon, Wallet } from 'lucide-react';
+import { SearchIcon, SunIcon, UserIcon, LogOutIcon, ChevronDownIcon, Wallet, AwardIcon } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWallet } from '../../contexts/WalletContext';
+import { useLoyalty } from '../../contexts/LoyaltyContext';
 import { trackButtonClick } from '../../utils/analytics';
 import DepositModal from '../Wallet/DepositModal';
 
 const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { getFormattedBalance } = useWallet();
+  const { points, tier } = useLoyalty();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -80,6 +82,17 @@ const Header: React.FC = () => {
           <div className="flex items-center space-x-4">
             {/* Balance and Deposit */}
             <div className="flex items-center space-x-3">
+              {/* Points sit next to cash so the two balances are read together.
+                  Links to the card because that is where the barcode is. */}
+              <Link
+                to="/rewards"
+                onClick={() => trackButtonClick('Loyalty Balance', 'Header', { points_balance: points, loyalty_tier: tier.name })}
+                className="hidden sm:flex items-center space-x-2 bg-[#1B3B6F] px-3 py-1.5 rounded-md hover:bg-[#2A4E8D]"
+                aria-label={`${points.toLocaleString()} reward points, ${tier.name} tier`}
+              >
+                <AwardIcon size={16} className={tier.textClass} aria-hidden="true" />
+                <span className="font-medium text-white">{points.toLocaleString()}</span>
+              </Link>
               <div className="flex items-center space-x-2 bg-[#1B3B6F] px-3 py-1.5 rounded-md">
                 <Wallet size={16} className="text-green-400" />
                 <span className="font-medium text-white">{getFormattedBalance()}</span>
@@ -108,7 +121,21 @@ const Header: React.FC = () => {
                   <div className="px-4 py-2 text-sm text-gray-300 border-b border-gray-600">
                     <div className="font-medium">{user.firstName} {user.lastName}</div>
                     <div className="text-gray-400">{user.email}</div>
+                    {/* The loyalty ID is what a member reads out on the phone, so
+                        it needs to be findable without opening the card. */}
+                    <div className="text-gray-400 font-mono text-xs mt-1">{user.id}</div>
                   </div>
+                  <Link
+                    to="/rewards"
+                    onClick={() => {
+                      trackButtonClick('Rewards', 'Header Menu');
+                      setShowUserMenu(false);
+                    }}
+                    className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#2A4A7F]"
+                  >
+                    <AwardIcon size={16} className="mr-2" />
+                    Rewards card
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-[#2A4A7F]"

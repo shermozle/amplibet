@@ -182,26 +182,75 @@ All content is hardcoded in [src/utils/mockData.tsx](src/utils/mockData.tsx):
 - The whole init block is wrapped in try/catch; failures log and are swallowed.
 
 ### Custom events
+
+**Every** custom event carries `surface` (`web` | `kiosk` | `in_store` | `call_centre`). It is
+added centrally by the `track` wrapper in `analytics.ts` rather than at each call site, so it
+cannot be forgotten on one event and silently break the cross-surface comparison the demo is
+built around. Call that wrapper, never the SDK's `track` directly.
+
 | Event | Fired from | Key properties |
 |---|---|---|
-| `Page Viewed` | Landing, Login, Signup, Home, Sport, Event | `page_name`, `timestamp`, contextual ids |
+| `Page Viewed` | Landing, Login, Signup, Home, Sport, Event, Loyalty | `page_name`, `timestamp`, contextual ids |
 | `Sport Selected` | SportPage | `sport_id`, `sport_name` |
-| `Event Selected` | SportPage, EventPage | `event_id`, `home_team`, `away_team`, `matchup`, `sport_id` |
-| `Bet Added` | EventPage + BettingContext | `bet_id`, `event_id`, `selection`, `odds` |
+| `Event Selected` | EventPage (on mount only) | `event_id`, `home_team`, `away_team`, `matchup`, `sport_id` |
+| `Bet Added` | BettingContext | `bet_id`, `event_id`, `selection`, `odds` |
 | `Bet Removed` | BetSlip | `bet_id` |
 | `Bet Stake Updated` | BetSlip | `bet_id`, `stake` |
 | `Bet Placed` | BettingContext | `bet_count`, `total_stake`, `estimated_payout`, `potential_profit`, `bets[]` |
-| `User Signed Up` | AuthContext | `user_id`, `email`, `first_name`, `last_name`, `signup_method` |
-| `User Logged In` | AuthContext | `user_id`, `email`, `login_method` |
-| `User Logged Out` | AuthContext | `user_id` |
-| `User Identified` | analytics.setUserProperties | `user_id`, `properties` |
-| `Deposit Made` | WalletContext (success only) | `amount`, `currency`, `card_brand`, `card_last_four`, `cardholder_name`, `payment_method` |
+| `Bet Placement Failed` | BettingContext (every rejection path) | `failure_reason`, `bet_count`, `total_stake`, `selections` |
+| `User Signed Up` | AuthContext | `loyalty_id`, `signup_method` |
+| `User Logged In` | AuthContext | `loyalty_id`, `login_method` |
+| `User Logged Out` | AuthContext | `loyalty_id` |
+| `Loyalty Points Earned` | LoyaltyContext | `loyalty_id`, `points_earned`, `earn_reason`, `points_balance`, `loyalty_tier` |
+| `Loyalty Tier Changed` | LoyaltyContext | `loyalty_id`, `from_tier`, `to_tier`, `points_balance` |
+| `Loyalty Card Viewed` | LoyaltyPage | `loyalty_id`, `loyalty_tier`, `points_balance` |
+| `Deposit Made` | WalletContext (success only) | `amount`, `currency`, `card_brand`, `card_last_four`, `payment_method` |
+| `Deposit Failed` | WalletContext | `amount`, `failure_reason`, `card_brand` |
 | `Button Clicked` | Landing, Login, Signup, Header, BetSlip | `button_name`, `location`, plus ad-hoc props |
-| `Experiment Variant Assigned` / `Experiment Exposure` | analytics.ts | never called from the app |
+
+### Loyalty programme
+
+- **Points:** 1 per whole dollar **staked**, credited at placement, not settlement. A losing bet
+  still earns. Accruing on stake rather than winnings is what lets the identical rule apply to a
+  cash bet taken over a counter, where there is no account balance to settle against.
+- **Tiers:** Bronze 0, Silver 1,000, Gold 5,000, Platinum 20,000.
+- **Ledger:** every credit records the originating `surface`, which is what makes "how much of
+  our accrual comes from in-venue?" answerable. The balance is derived from the ledger rather
+  than stored beside it, so the two cannot drift.
+- **Card:** Code 39 barcode rendered as inline SVG (`components/Loyalty/Barcode.tsx`). Code 39
+  covers `A-Z`, `0-9` and `-` with no check digit and no dependency, so it encodes the ID
+  exactly and any retail scanner reads it unconfigured. The ID alphabet omits `0/O` and `1/I/L`,
+  which are ambiguous both read aloud to call centre staff and printed as bars.
 
 ### User properties
-Set via `Identify` on signup and login: `email`, `first_name`, `last_name`, `signup_date`,
-`last_login`, `user_type: 'demo_user'`. `user_id` = email address.
+Set via `Identify` on signup, login and session restore: `loyalty_id`, `email`, `first_name`,
+`last_name`, `signup_date`, `last_login`, `user_type: 'demo_user'`, `loyalty_tier`,
+`loyalty_points`.
+
+### Identity
+
+`user_id` is the **loyalty ID** (`AB-XXXXXXXX`) on every surface.
+
+This is the feature the loyalty programme exists to enable, not an incidental choice. A bet
+placed at a kiosk, a call to the contact centre and a deposit on the web only resolve to one
+person if they agree on the identifier, and the loyalty card is the only identifier a customer
+physically carries between them. Email cannot serve: at a kiosk the customer scans a card
+rather than typing an address, so an email-keyed kiosk is a population of strangers.
+
+The loyalty ID is also the account id (`User.id`) and the localStorage key suffix. That is
+deliberate — one value rather than an internal id plus a separate loyalty number, because two
+ids for one person is exactly what stops surfaces joining up.
+
+**This is a breaking identity change.** Before it, the app used two conflicting schemes: signup
+identified by a random internal id while login identified by email, so the same person accrued
+two `user_id`s depending on how they arrived. Neither stitches to a loyalty ID. Consequences:
+
+- Historical events keep their old `user_id` and will not join to post-change events for the
+  same person. Cross-surface funnels should start from the release date.
+- A session stored before the change has a random id; on restore it is migrated to a freshly
+  minted loyalty ID, which orphans that browser's existing per-user localStorage keys.
+- `setUserId(undefined)` now runs on logout, so anonymous browsing after sign-out is no longer
+  attributed to the member who just left.
 
 ---
 
@@ -279,6 +328,14 @@ Some Home components still use generic Tailwind greys (`bg-gray-800`, plus a non
     real AFLW fixture — a broken link looked like a working page and emitted an
     `Event Selected` for a selection the user never made.
 11. **The deposit modal cannot be dismissed with Escape** and does not trap focus.
+12. **Persisted state was wiped on every page load.** In `WalletContext` and
+    `BettingContext` the load effect and the save effect both fire in the commit where
+    `user` first appears. The save runs second and wrote the still-empty pre-load state
+    straight over storage, so a balance, slip and bet history did not survive a reload.
+    Fixed by recording in state which member the state belongs to and only persisting
+    once it matches the signed-in user. `LoyaltyContext` uses the same guard.
+    Only found by placing a bet and reloading — it is invisible in review, and the
+    length guard removed as defect 6 was masking it for transactions.
 
 ### Dead code
 - [src/AppRouter.tsx](src/AppRouter.tsx) — a `BrowserRouter` wrapper, never imported.
