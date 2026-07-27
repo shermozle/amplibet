@@ -346,15 +346,33 @@ the Bronze/Silver/Gold metals are data, not chrome, and keep their own values.
 | **Racing** | ✅ `/racing` index + `/race/:raceId` win markets; home-page race rail repointed. |
 | **Esports** | ✅ Three fixtures behind the existing sidebar link via the generic sport page. |
 
+### Data scripts (Release 2)
+
+- **Cross-surface simulator** (`scripts/simulate-events.mjs`, `npm run simulate`): generates
+  `in_store` and `call_centre` events keyed by loyalty ID via the Amplitude HTTP V2 API —
+  persona-weighted members (venue regulars, omnichannel, phone-first), business-hours
+  timestamps (no Sunday call-centre traffic), `Bet Placed`/`Loyalty Points Earned`/
+  `Support Call Started`/`Support Call Resolved` mirroring the app's vocabulary. **Dry run by
+  default**; `--send` requires `AMPLITUDE_API_KEY` from the environment. `--seed` +
+  deterministic `insert_id`s make runs reproducible and re-sends idempotent.
+- **Fixture sync** (`scripts/sync-fixtures.mjs`, `npm run sync-fixtures`): writes
+  `src/data/synced-fixtures.json`, merged into `allEvents()` at build time. Real AFL
+  fixtures from the Squiggle API (identifying User-Agent with contact email; fetched at
+  dev/CI time only — visitors' browsers never call it, per Squiggle's terms), with model
+  tip confidence converted to decimal odds under a 5% book margin. Other leagues get
+  generated rolling rounds seeded by date, so same-day re-runs produce no diff noise.
+  A scheduled Action ([.github/workflows/sync-fixtures.yml](.github/workflows/sync-fixtures.yml))
+  opens a PR with refreshed data twice a week rather than pushing to `main`, so a bad feed
+  day never deploys unreviewed.
+
 ### Still not implemented
 | Item | State |
 |---|---|
-| **Bot-driven data generation** | Planned as the cross-surface simulation script (Release 2, PR5). |
-| **Kiosk surface** | Planned (Release 2, PR4). |
 | **Featured-events carousel** on landing | Static 4-up benefit grid instead. |
 | **Markets beyond Match Result / Win** | Handicap, totals etc. render but are inert. |
 | **Theme toggle** | Header button emits `Button Clicked` only. |
-| **Live odds movement** | All odds static until the fixture-sync work (PR5). |
+| **Live odds movement** | Odds refresh with each fixture sync, but do not move intraday. |
+| **Settlement from real results** | Squiggle exposes final scores; wiring them into `settlePendingBets` (instead of odds-implied simulation) is a natural follow-on. |
 
 ### Known defects — all fixed (kept as a log; numbers are referenced elsewhere)
 

@@ -9,6 +9,8 @@
     "build": "npx vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "simulate": "node scripts/simulate-events.mjs",
+    "sync-fixtures": "node scripts/sync-fixtures.mjs",
     "preview": "npx vite preview"
   },
   "dependencies": {
