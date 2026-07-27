@@ -1,7 +1,17 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { trackUserSignup, trackUserLogin, trackUserLogout } from '../utils/analytics';
+import {
+  trackUserSignup,
+  trackUserLogin,
+  trackUserLogout,
+  identifyLoyaltyMember
+} from '../utils/analytics';
+import { mintLoyaltyId, isLoyaltyId } from '../utils/loyalty';
 
 export interface User {
+  // The loyalty ID (AB-XXXXXXXX). It is the account identifier, the localStorage
+  // key suffix and the Amplitude user_id, all at once — deliberately one value
+  // rather than an internal id plus a separate loyalty number, because two ids
+  // for one person is exactly what stops kiosk and web sessions joining up.
   id: string;
   email: string;
   firstName: string;
@@ -76,8 +86,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const user = JSON.parse(storedUser);
         // Convert createdAt string back to Date
         user.createdAt = new Date(user.createdAt);
-        
-        
+
+        // Sessions stored before loyalty IDs existed have a random id like
+        // '2vfjpcuif'. Mint a real one so the card, the barcode and the
+        // Amplitude user_id are all valid. Their existing per-user localStorage
+        // keys are orphaned by this, which is the local echo of the identity
+        // break documented in SPECIFICATION.md.
+        if (!isLoyaltyId(user.id)) {
+          user.id = mintLoyaltyId();
+          localStorage.setItem('amplibet_user', JSON.stringify(user));
+        }
+
+        // Re-bind the user_id on every restore. Without this a returning visitor
+        // is anonymous until they happen to log in again, and their events land
+        // on the device rather than the member.
+        identifyLoyaltyMember(user.id, { loyalty_id: user.id, email: user.email });
+
         dispatch({ type: 'RESTORE_SESSION', payload: user });
       } catch (error) {
         console.error('Error parsing stored user data:', error);
@@ -99,7 +123,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Mock authentication - accept any email/password combination
       const user: User = {
-        id: Math.random().toString(36).slice(2, 11),
+        id: mintLoyaltyId(),
         email,
         firstName: email.split('@')[0].split('.')[0] || 'User',
         lastName: email.split('@')[0].split('.')[1] || 'Demo',
@@ -134,7 +158,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Create new user
       const user: User = {
         ...userData,
-        id: Math.random().toString(36).slice(2, 11),
+        id: mintLoyaltyId(),
         createdAt: new Date(),
       };
 
@@ -171,7 +195,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // silently leaves the slip and history behind to be restored on next login.
     localStorage.removeItem('amplibet_user');
     if (state.user) {
-      for (const prefix of ['amplibet_bets', 'amplibet_history', 'amplibet_balance', 'amplibet_transactions']) {
+      for (const prefix of ['amplibet_bets', 'amplibet_history', 'amplibet_balance', 'amplibet_transactions', 'amplibet_loyalty']) {
         localStorage.removeItem(`${prefix}_${state.user.id}`);
       }
     }

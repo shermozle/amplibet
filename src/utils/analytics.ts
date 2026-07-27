@@ -1,8 +1,9 @@
-import { initAll, add, track, identify } from '@amplitude/unified';
+import { initAll, add, track as amplitudeTrack, identify, setUserId } from '@amplitude/unified';
 // Import Identify class from the underlying analytics package that unified uses
 import { Identify } from '@amplitude/analytics-browser';
 // Guides & Surveys (in-product engagement) plugin
 import { plugin as engagementPlugin } from '@amplitude/engagement-browser';
+import { detectSurface, type ClientSurface } from './surface';
 
 const AMPLITUDE_API_KEY = '51a87354dce5f3a16ac6fe902c4c59a0';
 
@@ -47,6 +48,24 @@ try {
 } catch (error) {
   console.error('[Analytics] Failed to initialize Amplitude:', error);
 }
+
+// The surface this session is running as. Read once at module load from the URL so
+// it is set before the first event, then kept in sync by setSurface as the router
+// moves in and out of /kiosk.
+let currentSurface: ClientSurface = detectSurface();
+
+export const setSurface = (surface: ClientSurface) => {
+  currentSurface = surface;
+};
+
+export const getSurface = (): ClientSurface => currentSurface;
+
+// Every event goes through here so that `surface` cannot be forgotten on one call
+// site and silently break the cross-surface comparison the whole demo is built
+// around. Call this rather than the SDK's track directly.
+const track = (eventName: string, properties?: Record<string, any>) => {
+  amplitudeTrack(eventName, { surface: currentSurface, ...properties });
+};
 
 // Track page views
 export const trackPageView = (pageName: string, properties?: Record<string, any>) => {
@@ -119,78 +138,89 @@ export const trackBetPlaced = (bets: Array<{
     }))
   });
 };
-// Set user properties
-export const setUserProperties = (userId: string, properties: Record<string, any>) => {
+// Identity
+//
+// The loyalty ID is the Amplitude user_id on every surface. That is the whole
+// point of it: a bet placed at a kiosk, a phone call to the contact centre and a
+// deposit on the web all resolve to one user only if they agree on the id, and the
+// loyalty card is the only identifier a person physically carries between them.
+//
+// Email is a user property, not the identity. It is not available at a kiosk (the
+// customer scans a card, they do not type an address), so using it as the user_id
+// would make the kiosk a population of strangers.
+//
+// This replaces two conflicting schemes: signup identified by a random internal
+// id while login identified by email, so one person accrued two user_ids
+// depending on how they arrived. See the identity note in SPECIFICATION.md —
+// events recorded under either old scheme do not stitch to loyalty IDs.
+export const setUserProperties = (loyaltyId: string, properties: Record<string, any>) => {
   const identifyObj = new Identify();
-  
+
   Object.entries(properties).forEach(([key, value]) => {
     identifyObj.set(key, value);
   });
-  
-  identify(identifyObj, { user_id: userId });
-  
-  // Also track the user identification event
-  track('User Identified', {
-    user_id: userId,
-    timestamp: new Date().toISOString(),
-    properties
-  });
+
+  identify(identifyObj, { user_id: loyaltyId });
 };
 
-// New authentication tracking functions
-export const trackUserSignup = (userId: string, email: string, firstName: string, lastName: string) => {
-  track('User Signed Up', {
-    user_id: userId,
-    email: email,
-    first_name: firstName,
-    last_name: lastName,
-    signup_method: 'demo_form',
-    timestamp: new Date().toISOString()
-  });
-  
-  // Set user properties
-  setUserProperties(userId, {
+// Bind the SDK's user_id. Call this before tracking anything that should be
+// attributed to the person, including on session restore.
+export const identifyLoyaltyMember = (
+  loyaltyId: string,
+  properties?: Record<string, any>
+) => {
+  setUserId(loyaltyId);
+  if (properties) setUserProperties(loyaltyId, properties);
+};
+
+export const trackUserSignup = (
+  loyaltyId: string,
+  email: string,
+  firstName: string,
+  lastName: string
+) => {
+  // Identify before tracking so the signup event itself is attributed to the new
+  // loyalty ID rather than landing on the anonymous device.
+  identifyLoyaltyMember(loyaltyId, {
+    loyalty_id: loyaltyId,
     email,
     first_name: firstName,
     last_name: lastName,
     signup_date: new Date().toISOString(),
-    user_type: 'demo_user'
+    user_type: 'demo_user',
+    loyalty_tier: 'Bronze',
+    loyalty_points: 0
+  });
+
+  track('User Signed Up', {
+    loyalty_id: loyaltyId,
+    signup_method: 'demo_form',
+    timestamp: new Date().toISOString()
   });
 };
 
-export const identifyUser = (email: string, firstName?: string, lastName?: string) => {
-  // Use email as the user ID in Amplitude
-  const identifyObj = new Identify();
-  
-  // Set user properties
-  identifyObj.set('email', email);
-  if (firstName) identifyObj.set('first_name', firstName);
-  if (lastName) identifyObj.set('last_name', lastName);
-  identifyObj.set('last_login', new Date().toISOString());
-  
-  // Identify the user with email as user_id
-  identify(identifyObj, { user_id: email });
-  
-  console.log(`[Analytics] User identified with email: ${email}`);
-};
+export const trackUserLogin = (loyaltyId: string, email: string) => {
+  identifyLoyaltyMember(loyaltyId, {
+    loyalty_id: loyaltyId,
+    email,
+    last_login: new Date().toISOString()
+  });
 
-export const trackUserLogin = (userId: string, email: string) => {
-  // Identify the user first
-  identifyUser(email);
-  
   track('User Logged In', {
-    user_id: userId,
-    email: email,
+    loyalty_id: loyaltyId,
     login_method: 'demo_form',
     timestamp: new Date().toISOString()
   });
 };
 
-export const trackUserLogout = (userId: string) => {
+export const trackUserLogout = (loyaltyId: string) => {
   track('User Logged Out', {
-    user_id: userId,
+    loyalty_id: loyaltyId,
     timestamp: new Date().toISOString()
   });
+  // Clear the user_id so any subsequent anonymous browsing on this device is not
+  // attributed to the member who just signed out.
+  setUserId(undefined);
 };
 
 // Get card brand from card number (basic detection). Note we deliberately never
@@ -250,6 +280,56 @@ export const trackDepositFailed = (amount: number, reason: string, cardNumber?: 
     card_brand: cardNumber ? getCardBrand(cardNumber) : undefined,
     timestamp: new Date().toISOString(),
     transaction_type: 'deposit'
+  });
+};
+
+// Loyalty
+//
+// Points are earned on every surface, so these events carry the surface (added
+// automatically by track) and the loyalty ID. 'Loyalty Points Earned' is the event
+// that makes accrual attributable: without it you can see a balance but not where
+// it came from.
+export const trackLoyaltyPointsEarned = (
+  loyaltyId: string,
+  points: number,
+  reason: string,
+  balanceAfter: number,
+  tier: string
+) => {
+  track('Loyalty Points Earned', {
+    loyalty_id: loyaltyId,
+    points_earned: points,
+    earn_reason: reason,
+    points_balance: balanceAfter,
+    loyalty_tier: tier,
+    timestamp: new Date().toISOString()
+  });
+};
+
+export const trackLoyaltyTierChanged = (
+  loyaltyId: string,
+  fromTier: string,
+  toTier: string,
+  points: number
+) => {
+  track('Loyalty Tier Changed', {
+    loyalty_id: loyaltyId,
+    from_tier: fromTier,
+    to_tier: toTier,
+    points_balance: points,
+    timestamp: new Date().toISOString()
+  });
+  // Tier is a user property as well as an event: most segmentation wants "all
+  // Gold members" rather than "everyone who crossed into Gold in this window".
+  setUserProperties(loyaltyId, { loyalty_tier: toTier, loyalty_points: points });
+};
+
+export const trackLoyaltyCardViewed = (loyaltyId: string, tier: string, points: number) => {
+  track('Loyalty Card Viewed', {
+    loyalty_id: loyaltyId,
+    loyalty_tier: tier,
+    points_balance: points,
+    timestamp: new Date().toISOString()
   });
 };
 
