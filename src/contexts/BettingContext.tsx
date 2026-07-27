@@ -2,6 +2,7 @@ import React, { useState, createContext, useContext, useEffect, ReactNode } from
 import { trackBetAdded, trackBetRemoved, trackBetUpdated, trackBetPlaced, trackBetPlacementFailed } from '../utils/analytics';
 import { useAuth } from './AuthContext';
 import { useWallet } from './WalletContext';
+import { useLoyalty } from './LoyaltyContext';
 // A selection sitting in the bet slip. Stake is optional until the user types one.
 export interface Bet {
   id: string;
@@ -42,8 +43,16 @@ export const BettingProvider: React.FC<{
   const [selectedBets, setSelectedBets] = useState<Bet[]>([]);
   const [betHistory, setBetHistory] = useState<PlacedBet[]>([]);
   const [isPlacingBet, setIsPlacingBet] = useState(false);
+  // Which member the slip and history in state belong to, or null before they have
+  // been loaded. The save effects below key off this rather than `isAuthenticated`:
+  // both a load and a save effect fire in the commit where `user` appears, the save
+  // runs second, and it would otherwise write the still-empty pre-load arrays over
+  // the stored slip and history, clearing them on every page load.
+  const [hydratedFor, setHydratedFor] = useState<string | null>(null);
   const { user, isAuthenticated } = useAuth();
   const { deductFunds, balance } = useWallet();
+  const { earnPointsForStake } = useLoyalty();
+  const hydrated = hydratedFor !== null && hydratedFor === user?.id;
 
   // Load bets from localStorage when user changes or on mount
   useEffect(() => {
@@ -66,26 +75,29 @@ export const BettingProvider: React.FC<{
           console.error('Error parsing bet history:', error);
         }
       }
+
+      setHydratedFor(user.id);
     } else {
       // Clear bets when not authenticated
       setSelectedBets([]);
       setBetHistory([]);
+      setHydratedFor(null);
     }
   }, [user, isAuthenticated]);
 
   // Save bets to localStorage whenever they change
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (hydrated && user) {
       localStorage.setItem(`amplibet_bets_${user.id}`, JSON.stringify(selectedBets));
     }
-  }, [selectedBets, user, isAuthenticated]);
+  }, [selectedBets, hydrated, user]);
 
   // Save bet history to localStorage whenever it changes
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (hydrated && user) {
       localStorage.setItem(`amplibet_history_${user.id}`, JSON.stringify(betHistory));
     }
-  }, [betHistory, user, isAuthenticated]);
+  }, [betHistory, hydrated, user]);
   const addBet = (bet: Bet) => {
     // Replace existing bet for same selection if it exists
     const existingBetIndex = selectedBets.findIndex(b => b.eventId === bet.eventId);
@@ -163,10 +175,19 @@ export const BettingProvider: React.FC<{
       }));
       
       setBetHistory(prev => [...completedBets, ...prev]);
-      
+
+      // Points are credited at placement, not at settlement, and on stake rather
+      // than winnings — so a losing bet still earns. This is what lets the same
+      // rule apply to a cash bet taken at a kiosk, where there is no account
+      // balance to settle against.
+      earnPointsForStake(
+        totalStake,
+        `Bet on ${selectedBets.length} selection${selectedBets.length > 1 ? 's' : ''}`
+      );
+
       // Clear selected bets
       setSelectedBets([]);
-      
+
     } finally {
       setIsPlacingBet(false);
     }
