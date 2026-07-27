@@ -24,6 +24,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # Gate the deploy on types and lint. Vite builds via esbuild and does not
+      # type-check, so without this step a type error ships to the live demo.
+      - run: npm run typecheck
+      - run: npm run lint
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
