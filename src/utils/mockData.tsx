@@ -1,3 +1,5 @@
+import syncedFixtures from '../data/synced-fixtures.json';
+
 // Sport icons as JSX elements
 export const sportIcons = {
   afl: <span>AFL</span>,
@@ -469,7 +471,21 @@ export const getRaceById = (raceId: string) => mockRaceEvents.find(race => race.
 export const getSportById = (sportId: string) => mockSports.find(sport => sport.id === sportId);
 
 // Every head-to-head event across every catalogue (races excluded — see above).
-export const allEvents = () => [...mockSportEvents, ...mockAFLWEvents, ...mockTennisEvents, ...mockEsportsEvents];
+// Fixtures refreshed by scripts/sync-fixtures.mjs (Squiggle AFL data + generated
+// rounds for other leagues) and committed as static JSON — the browser never
+// fetches a feed, per Squiggle's terms. Filtered defensively so a malformed
+// sync commit degrades to the hardcoded catalogue instead of crashing pages.
+export const syncedEvents = (syncedFixtures.events ?? []).filter(
+  event => event && event.id && event.homeTeam && event.awayTeam && event.odds
+);
+
+export const allEvents = () => [
+  ...mockSportEvents,
+  ...mockAFLWEvents,
+  ...mockTennisEvents,
+  ...mockEsportsEvents,
+  ...syncedEvents
+];
 
 export const getEventById = (eventId: string) => allEvents().find(event => event.id === eventId);
 

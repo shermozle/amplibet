@@ -1,0 +1,40 @@
+name: Sync fixtures
+
+# Keeps the demo's markets fresh: real AFL fixtures from Squiggle plus rolling
+# generated rounds. Opens a PR rather than pushing to main, so a bad feed day
+# never deploys unreviewed data to the live demo.
+on:
+  schedule:
+    - cron: '0 18 * * 1,4' # Mon & Thu 18:00 UTC — early morning AEST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/sync-fixtures.mjs
+      - name: Open PR if fixtures changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- src/data/synced-fixtures.json; then
+            echo "Fixtures unchanged; nothing to do."
+            exit 0
+          fi
+          BRANCH="chore/fixture-sync-$(date -u +%Y%m%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add src/data/synced-fixtures.json
+          git commit -m "Refresh synced fixtures"
+          git push -f origin "$BRANCH"
+          gh pr create --fill --base main --head "$BRANCH" \
+            || echo "PR already open for $BRANCH"

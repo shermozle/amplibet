@@ -109,6 +109,7 @@ Betting sits innermost because placement credits points (Loyalty), moves money
 | `/results` | `ResultsPage` | `Layout` | Pending bets + simulated settlement |
 | `/account` | `AccountPage` | `Layout` | Profile, withdraw, transaction history |
 | `/rewards` | `LoyaltyPage` | `Layout` | Loyalty card, barcode, ledger |
+| `/kiosk` (+ `scan`, `home`, `slip`, `done`) | `Kiosk*` pages | `KioskLayout` | In-venue touchscreen surface — see § Kiosk |
 
 `Layout` = `Header` + `Sidebar` + `<main>` + `BetSlip`, composed via an `Outlet` pattern so
 providers and chrome are not remounted on navigation. It is responsive: below `lg` the
@@ -253,6 +254,8 @@ built around. Call that wrapper, never the SDK's `track` directly.
 | `Responsible Gambling Prompt Shown` / `Choice` | ResponsibleGamblingModal | `total_stake`, `choice` (`continued`\|`cancelled`) |
 | `Session Timeout Warning Shown` / `Session Extended` / `Session Timed Out` | SessionTimeoutManager | — |
 | `Notification Shown` | NotificationContext | `notification_type`, `title` |
+| `Loyalty Card Scanned` | KioskScanPage | `loyalty_id` (+ kiosk context) |
+| `Cash Inserted` | WalletContext.insertCash | `amount`, `balance_after`, `payment_method: cash` |
 | `Button Clicked` | Landing, Login, Signup, Header, BetSlip, pages | `button_name`, `location`, plus ad-hoc props |
 
 ### Loyalty programme
@@ -346,15 +349,59 @@ the Bronze/Silver/Gold metals are data, not chrome, and keep their own values.
 | **Racing** | ✅ `/racing` index + `/race/:raceId` win markets; home-page race rail repointed. |
 | **Esports** | ✅ Three fixtures behind the existing sidebar link via the generic sport page. |
 
+### Kiosk surface (Release 2)
+
+Routes under `/kiosk`, same bundle and providers, own chrome (`KioskLayout` — no header,
+sidebar, bet slip panel, onboarding or web session timeout). Designed for venue touchscreens:
+large type, ≥ 64 px tap targets, no hover states.
+
+- **Flow:** attract screen → scan rewards card → browse markets with giant odds buttons →
+  slip with on-screen numeric keypad → confirmation showing points earned → finish.
+- **Identity by card scan.** Barcode scanners are keyboard wedges (they type the code and
+  press Enter), so the scan screen is a permanently-focused input that accepts scanner or
+  manual entry, validates the `AB-XXXXXXXX` format, then `identifyAsMember(loyaltyId)` —
+  no email, no password, because a card reader can produce neither. Any well-formed id is
+  accepted (the mock has no member registry). `Loyalty Card Scanned` is tracked distinctly
+  from `User Logged In` (`login_method: loyalty_card_scan`).
+- **Cash, not cards.** The kiosk tops up with `insertCash` ($20/$50 acceptor buttons):
+  instant, no simulated decline, tracked as `Cash Inserted` — deliberately not
+  `Deposit Made`, which means a card payment with brand/last-four; conflating them would
+  corrupt payment-mix analysis.
+- **Singles only** (`setBetMode('singles')` on mount); the responsible-gambling gate and the
+  12% simulated placement failures apply exactly as on the web.
+- **Idle reset:** 90 s without touch signs the member out and returns to the attract screen —
+  a shared venue terminal must never leave one member's session for the next walker-up.
+- While kiosk routes are mounted, every event carries `surface: 'kiosk'` plus `kiosk_id` and
+  `venue` (from localStorage `amplibet_kiosk`, defaulting to `KIOSK-01` / Collingwood),
+  injected by the central `track` wrapper.
+
+### Data scripts (Release 2)
+
+- **Cross-surface simulator** (`scripts/simulate-events.mjs`, `npm run simulate`): generates
+  `in_store` and `call_centre` events keyed by loyalty ID via the Amplitude HTTP V2 API —
+  persona-weighted members (venue regulars, omnichannel, phone-first), business-hours
+  timestamps (no Sunday call-centre traffic), `Bet Placed`/`Loyalty Points Earned`/
+  `Support Call Started`/`Support Call Resolved` mirroring the app's vocabulary. **Dry run by
+  default**; `--send` requires `AMPLITUDE_API_KEY` from the environment. `--seed` +
+  deterministic `insert_id`s make runs reproducible and re-sends idempotent.
+- **Fixture sync** (`scripts/sync-fixtures.mjs`, `npm run sync-fixtures`): writes
+  `src/data/synced-fixtures.json`, merged into `allEvents()` at build time. Real AFL
+  fixtures from the Squiggle API (identifying User-Agent with contact email; fetched at
+  dev/CI time only — visitors' browsers never call it, per Squiggle's terms), with model
+  tip confidence converted to decimal odds under a 5% book margin. Other leagues get
+  generated rolling rounds seeded by date, so same-day re-runs produce no diff noise.
+  A scheduled Action ([.github/workflows/sync-fixtures.yml](.github/workflows/sync-fixtures.yml))
+  opens a PR with refreshed data twice a week rather than pushing to `main`, so a bad feed
+  day never deploys unreviewed.
+
 ### Still not implemented
 | Item | State |
 |---|---|
-| **Bot-driven data generation** | Planned as the cross-surface simulation script (Release 2, PR5). |
-| **Kiosk surface** | Planned (Release 2, PR4). |
 | **Featured-events carousel** on landing | Static 4-up benefit grid instead. |
 | **Markets beyond Match Result / Win** | Handicap, totals etc. render but are inert. |
 | **Theme toggle** | Header button emits `Button Clicked` only. |
-| **Live odds movement** | All odds static until the fixture-sync work (PR5). |
+| **Live odds movement** | Odds refresh with each fixture sync, but do not move intraday. |
+| **Settlement from real results** | Squiggle exposes final scores; wiring them into `settlePendingBets` (instead of odds-implied simulation) is a natural follow-on. |
 
 ### Known defects — all fixed (kept as a log; numbers are referenced elsewhere)
 

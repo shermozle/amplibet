@@ -28,6 +28,9 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   signup: (userData: Omit<User, 'id' | 'createdAt'>) => Promise<void>;
+  // Kiosk sign-in: a scanned loyalty card identifies the member directly — no
+  // email, no password, because a card reader can produce neither.
+  identifyAsMember: (loyaltyId: string) => boolean;
   logout: () => void;
 }
 
@@ -180,6 +183,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Sign in from a scanned (or typed) loyalty card. Returns false on an invalid
+  // id rather than throwing — the kiosk scan screen shows the error inline.
+  // Any well-formed id is accepted: the mock has no member registry, and a
+  // kiosk demo needs cards minted on other devices to work here.
+  const identifyAsMember = (loyaltyId: string): boolean => {
+    const normalised = loyaltyId.trim().toUpperCase();
+    if (!isLoyaltyId(normalised)) return false;
+
+    const user: User = {
+      id: normalised,
+      // Unknown at scan time. Kept empty rather than faked so analytics never
+      // carries an invented address for a walk-up member.
+      email: '',
+      firstName: 'Member',
+      lastName: normalised.slice(-4),
+      createdAt: new Date(),
+    };
+
+    localStorage.setItem('amplibet_user', JSON.stringify(user));
+
+    try {
+      trackUserLogin(user.id, user.email, 'loyalty_card_scan');
+    } catch (analyticsError) {
+      console.warn('Analytics tracking failed during card scan:', analyticsError);
+    }
+
+    dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+    return true;
+  };
+
   const logout = (): void => {
     // Track logout event before clearing user data (wrapped in try-catch)
     if (state.user) {
@@ -207,6 +240,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     ...state,
     login,
     signup,
+    identifyAsMember,
     logout,
   };
 

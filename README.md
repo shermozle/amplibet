@@ -23,6 +23,23 @@ npm run dev
 | `npm run build` | Production build to `dist/` |
 | `npm run typecheck` | `tsc --noEmit` — **not** run by `build`, so run it before pushing |
 | `npm run lint` | ESLint |
+| `npm run simulate` | Cross-surface event simulator (dry run; see below) |
+| `npm run sync-fixtures` | Refresh `src/data/synced-fixtures.json` from Squiggle + generators |
+
+## Data scripts
+
+**Event simulation** — `scripts/simulate-events.mjs` generates in-store and call-centre
+events keyed by loyalty ID, so cross-surface journeys are demonstrable in Amplitude.
+It is a **dry run by default**; transmitting requires both the `--send` flag and the
+server API key in the `AMPLITUDE_API_KEY` environment variable. Never hardcode or commit
+that key. `--seed` reproduces a run and deterministic `insert_id`s make re-sends idempotent.
+
+**Fixture sync** — `scripts/sync-fixtures.mjs` writes `src/data/synced-fixtures.json`,
+which `mockData` merges into the catalogue. Real AFL fixtures come from the Squiggle API
+(identifying User-Agent, build-time only — visitors' browsers never call it, per its
+terms); other leagues get generated rolling rounds. A scheduled workflow
+([.github/workflows/sync-fixtures.yml](.github/workflows/sync-fixtures.yml)) opens a PR
+with refreshed data twice a week.
 
 ## Deployment
 
