@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
-import { trackDeposit, trackDepositFailed } from '../utils/analytics';
+import { trackDeposit, trackDepositFailed, trackWithdrawal, trackWithdrawalFailed } from '../utils/analytics';
 
 export interface Transaction {
   id: string;
-  type: 'deposit' | 'bet' | 'payout';
+  type: 'deposit' | 'bet' | 'payout' | 'withdrawal';
   amount: number;
   description: string;
   timestamp: Date;
@@ -33,6 +33,7 @@ interface WalletState {
 
 interface WalletContextType extends WalletState {
   deposit: (amount: number, cardInfo: CreditCardInfo) => Promise<void>;
+  withdraw: (amount: number) => Promise<void>;
   deductFunds: (amount: number, description: string) => boolean;
   addPayout: (amount: number, description: string) => void;
   getFormattedBalance: () => string;
@@ -43,6 +44,7 @@ type WalletAction =
   | { type: 'DEPOSIT_SUCCESS'; payload: { amount: number; transaction: Transaction } }
   | { type: 'DEDUCT_FUNDS'; payload: { amount: number; transaction: Transaction } }
   | { type: 'ADD_PAYOUT'; payload: { amount: number; transaction: Transaction } }
+  | { type: 'WITHDRAW_SUCCESS'; payload: { amount: number; transaction: Transaction } }
   | { type: 'LOAD_WALLET_DATA'; payload: { balance: number; transactions: Transaction[]; userId: string } }
   | { type: 'RESET_WALLET' };
 
@@ -74,6 +76,12 @@ const walletReducer = (state: WalletState, action: WalletAction): WalletState =>
       return {
         ...state,
         balance: state.balance + action.payload.amount,
+        transactions: [action.payload.transaction, ...state.transactions],
+      };
+    case 'WITHDRAW_SUCCESS':
+      return {
+        ...state,
+        balance: state.balance - action.payload.amount,
         transactions: [action.payload.transaction, ...state.transactions],
       };
     case 'LOAD_WALLET_DATA':
@@ -182,6 +190,44 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  // Withdrawals validate before any async work so the failure events carry the
+  // real reason, then simulate an 8% provider decline — the demo needs failed
+  // withdrawals in the event stream, not just happy paths.
+  const withdraw = async (amount: number): Promise<void> => {
+    if (!isAuthenticated || !user) {
+      throw new Error('Must be logged in to withdraw funds');
+    }
+    if (!amount || amount <= 0) {
+      trackWithdrawalFailed(amount, 'Invalid amount');
+      throw new Error('Enter an amount to withdraw.');
+    }
+    if (amount > state.balance) {
+      trackWithdrawalFailed(amount, 'Insufficient funds');
+      throw new Error('You cannot withdraw more than your balance.');
+    }
+
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
+    if (Math.random() < 0.08) {
+      const reason = 'Withdrawal provider declined the request. Please try again.';
+      trackWithdrawalFailed(amount, reason);
+      throw new Error(reason);
+    }
+
+    const transaction: Transaction = {
+      id: Math.random().toString(36).slice(2, 11),
+      type: 'withdrawal',
+      amount,
+      description: 'Withdrawal to nominated bank account',
+      timestamp: new Date(),
+      status: 'completed'
+    };
+
+    trackWithdrawal(amount);
+    dispatch({ type: 'WITHDRAW_SUCCESS', payload: { amount, transaction } });
+  };
+
   const deductFunds = (amount: number, description: string): boolean => {
     if (!isAuthenticated || !user) {
       return false;
@@ -228,6 +274,7 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const value: WalletContextType = {
     ...state,
     deposit,
+    withdraw,
     deductFunds,
     addPayout,
     getFormattedBalance,

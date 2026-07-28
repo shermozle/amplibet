@@ -13,20 +13,20 @@ const UpcomingSport: React.FC = () => {
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {mockTennisEvents.map(event => <Link key={event.id} to={`/event/${event.id}`} className="bg-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors">
+        {mockTennisEvents.map(event => <Link key={event.id} to={`/event/${event.id}`} className="bg-surface rounded-lg p-4 hover:bg-raised transition-colors">
             <div className="text-xs text-gray-400 mb-1">{event.leagueName}</div>
             <div className="text-sm mb-3">
               {event.homeTeam} v {event.awayTeam}
             </div>
             <div className="flex justify-between">
-              <div className="bg-gray-700 text-center py-1 px-2 rounded text-sm">
+              <div className="bg-raised text-center py-1 px-2 rounded text-sm">
                 {event.startTime}
               </div>
               <div className="flex">
-                <div className="bg-gray-700 text-center py-1 px-2 rounded-l text-sm">
+                <div className="bg-raised text-center py-1 px-2 rounded-l text-sm">
                   {event.odds.home.toFixed(2)}
                 </div>
-                <div className="bg-gray-700 text-center py-1 px-2 rounded-r text-sm border-l border-gray-600">
+                <div className="bg-raised text-center py-1 px-2 rounded-r text-sm border-l border-ink">
                   {event.odds.away.toFixed(2)}
                 </div>
               </div>

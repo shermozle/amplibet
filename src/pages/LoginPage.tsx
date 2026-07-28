@@ -45,13 +45,13 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F1419] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-ink-deep flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
           <Link to="/" className="flex justify-center">
             <div className="text-3xl font-bold">
               <span className="text-white">AMPLI</span>
-              <span className="text-[#4F44E0]">BET</span>
+              <span className="text-brand">BET</span>
             </div>
           </Link>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
@@ -61,7 +61,7 @@ const LoginPage: React.FC = () => {
             Or{' '}
             <Link
               to="/signup"
-              className="font-medium text-[#4F44E0] hover:text-[#3832A0]"
+              className="font-medium text-brand hover:text-grape"
               onClick={handleSignupLinkClick}
             >
               create a new account
@@ -80,7 +80,7 @@ const LoginPage: React.FC = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none relative block w-full px-3 py-3 border border-gray-600 placeholder-gray-500 text-white bg-[#1B3B6F] rounded-md focus:outline-none focus:ring-[#4F44E0] focus:border-[#4F44E0] focus:z-10"
+                className="appearance-none relative block w-full px-3 py-3 border border-gray-600 placeholder-gray-500 text-white bg-surface rounded-md focus:outline-none focus:ring-brand focus:border-brand focus:z-10"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -97,13 +97,14 @@ const LoginPage: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
-                  className="appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-600 placeholder-gray-500 text-white bg-[#1B3B6F] rounded-md focus:outline-none focus:ring-[#4F44E0] focus:border-[#4F44E0] focus:z-10"
+                  className="appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-600 placeholder-gray-500 text-white bg-surface rounded-md focus:outline-none focus:ring-brand focus:border-brand focus:z-10"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
@@ -118,14 +119,14 @@ const LoginPage: React.FC = () => {
           </div>
 
           {error && (
-            <div className="text-red-400 text-sm text-center">{error}</div>
+            <div className="text-danger text-sm text-center">{error}</div>
           )}
 
           <div>
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#4F44E0] hover:bg-[#3832A0] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4F44E0] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-brand hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>

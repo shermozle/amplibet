@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, CreditCard, DollarSign, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useWallet, CreditCardInfo } from '../../contexts/WalletContext';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -19,6 +20,11 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
   });
   const [errors, setErrors] = useState<Partial<CreditCardInfo & { amount: string; general: string }>>({});
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // Escape is suppressed while a deposit is in flight for the same reason the
+  // X button is disabled: closing mid-charge would hide the outcome of the
+  // payment from the user.
+  const dialogRef = useFocusTrap(isOpen, isProcessingDeposit ? undefined : onClose);
 
   const quickAmounts = [25, 50, 100, 250, 500];
 
@@ -129,35 +135,49 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1B3B6F] rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+      onClick={(e) => {
+        // Only a click on the backdrop itself dismisses; clicks inside the
+        // dialog bubble up here and must not close a half-filled card form.
+        if (e.target === e.currentTarget && !isProcessingDeposit) onClose();
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="deposit-modal-title"
+        className="bg-surface rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto"
+      >
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
-              <DollarSign className="text-green-400" size={24} />
-              <h2 className="text-xl font-bold text-white">Deposit Funds</h2>
+              <DollarSign className="text-accent" size={24} />
+              <h2 id="deposit-modal-title" className="text-xl font-bold text-white">Deposit Funds</h2>
             </div>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-white"
               disabled={isProcessingDeposit}
+              aria-label="Close deposit dialog"
             >
               <X size={24} />
             </button>
           </div>
 
-          {/* Success Message */}
+          {/* Success Message. Ink text: the accent is too light to carry white. */}
           {showSuccess && (
-            <div className="mb-6 p-4 bg-green-600 rounded-md flex items-center space-x-2">
+            <div className="mb-6 p-4 bg-accent text-ink rounded-md flex items-center space-x-2">
               <CheckCircle size={20} />
-              <span className="text-white font-medium">Deposit successful!</span>
+              <span className="font-medium">Deposit successful!</span>
             </div>
           )}
 
           {/* Error Message */}
           {errors.general && (
-            <div className="mb-6 p-4 bg-red-600 rounded-md flex items-center space-x-2">
+            <div className="mb-6 p-4 bg-danger rounded-md flex items-center space-x-2">
               <AlertCircle size={20} />
               <span className="text-white">{errors.general}</span>
             </div>
@@ -178,12 +198,12 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
                   max="10000"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 bg-[#13294B] text-white rounded-md border border-gray-600 focus:border-[#4F44E0] focus:outline-none"
+                  className="w-full pl-8 pr-3 py-2 bg-ink text-white rounded-md border border-gray-600 focus:border-brand focus:outline-none"
                   placeholder="0.00"
                   disabled={isProcessingDeposit}
                 />
               </div>
-              {errors.amount && <p className="text-red-400 text-sm mt-1">{errors.amount}</p>}
+              {errors.amount && <p className="text-danger text-sm mt-1">{errors.amount}</p>}
             </div>
 
             {/* Quick Amount Buttons */}
@@ -193,7 +213,7 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
                   key={quickAmount}
                   type="button"
                   onClick={() => setAmount(quickAmount.toString())}
-                  className="px-3 py-1 bg-[#13294B] text-gray-300 rounded border border-gray-600 hover:border-[#4F44E0] hover:text-white text-sm"
+                  className="px-3 py-1 bg-ink text-gray-300 rounded border border-gray-600 hover:border-brand hover:text-white text-sm"
                   disabled={isProcessingDeposit}
                 >
                   ${quickAmount}
@@ -212,12 +232,12 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
                   type="text"
                   value={cardInfo.cardNumber}
                   onChange={(e) => handleCardNumberChange(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 bg-[#13294B] text-white rounded-md border border-gray-600 focus:border-[#4F44E0] focus:outline-none"
+                  className="w-full pl-10 pr-3 py-2 bg-ink text-white rounded-md border border-gray-600 focus:border-brand focus:outline-none"
                   placeholder="1234 5678 9012 3456"
                   disabled={isProcessingDeposit}
                 />
               </div>
-              {errors.cardNumber && <p className="text-red-400 text-sm mt-1">{errors.cardNumber}</p>}
+              {errors.cardNumber && <p className="text-danger text-sm mt-1">{errors.cardNumber}</p>}
             </div>
 
             {/* Expiry and CVV */}
@@ -230,7 +250,7 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
                   <select
                     value={cardInfo.expiryMonth}
                     onChange={(e) => setCardInfo({ ...cardInfo, expiryMonth: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#13294B] text-white rounded-md border border-gray-600 focus:border-[#4F44E0] focus:outline-none"
+                    className="w-full px-3 py-2 bg-ink text-white rounded-md border border-gray-600 focus:border-brand focus:outline-none"
                     disabled={isProcessingDeposit}
                   >
                     <option value="">MM</option>
@@ -243,7 +263,7 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
                   <select
                     value={cardInfo.expiryYear}
                     onChange={(e) => setCardInfo({ ...cardInfo, expiryYear: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#13294B] text-white rounded-md border border-gray-600 focus:border-[#4F44E0] focus:outline-none"
+                    className="w-full px-3 py-2 bg-ink text-white rounded-md border border-gray-600 focus:border-brand focus:outline-none"
                     disabled={isProcessingDeposit}
                   >
                     <option value="">YYYY</option>
@@ -254,7 +274,7 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
                     ))}
                   </select>
                 </div>
-                {errors.expiryMonth && <p className="text-red-400 text-sm mt-1">{errors.expiryMonth}</p>}
+                {errors.expiryMonth && <p className="text-danger text-sm mt-1">{errors.expiryMonth}</p>}
               </div>
 
               <div>
@@ -266,11 +286,11 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
                   maxLength={4}
                   value={cardInfo.cvv}
                   onChange={(e) => setCardInfo({ ...cardInfo, cvv: e.target.value.replace(/\D/g, '') })}
-                  className="w-full px-3 py-2 bg-[#13294B] text-white rounded-md border border-gray-600 focus:border-[#4F44E0] focus:outline-none"
+                  className="w-full px-3 py-2 bg-ink text-white rounded-md border border-gray-600 focus:border-brand focus:outline-none"
                   placeholder="123"
                   disabled={isProcessingDeposit}
                 />
-                {errors.cvv && <p className="text-red-400 text-sm mt-1">{errors.cvv}</p>}
+                {errors.cvv && <p className="text-danger text-sm mt-1">{errors.cvv}</p>}
               </div>
             </div>
 
@@ -283,11 +303,11 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
                 type="text"
                 value={cardInfo.cardholderName}
                 onChange={(e) => setCardInfo({ ...cardInfo, cardholderName: e.target.value })}
-                className="w-full px-3 py-2 bg-[#13294B] text-white rounded-md border border-gray-600 focus:border-[#4F44E0] focus:outline-none"
+                className="w-full px-3 py-2 bg-ink text-white rounded-md border border-gray-600 focus:border-brand focus:outline-none"
                 placeholder="John Doe"
                 disabled={isProcessingDeposit}
               />
-              {errors.cardholderName && <p className="text-red-400 text-sm mt-1">{errors.cardholderName}</p>}
+              {errors.cardholderName && <p className="text-danger text-sm mt-1">{errors.cardholderName}</p>}
             </div>
 
             {/* Submit Button */}
@@ -295,7 +315,7 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
               <button
                 type="submit"
                 disabled={isProcessingDeposit || showSuccess}
-                className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-medium py-3 px-4 rounded-md transition-colors"
+                className="w-full flex items-center justify-center space-x-2 bg-brand hover:bg-brand-dark disabled:bg-gray-600 text-white font-medium py-3 px-4 rounded-md transition-colors"
               >
                 {isProcessingDeposit ? (
                   <>
@@ -313,7 +333,7 @@ const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
           </form>
 
           {/* Security Notice */}
-          <div className="mt-6 p-3 bg-[#13294B] rounded-md">
+          <div className="mt-6 p-3 bg-ink rounded-md">
             <p className="text-xs text-gray-400 text-center">
               🔒 This is a demo environment. No real payments are processed.
               Your card information is not stored or transmitted.
