@@ -60,11 +60,20 @@ export const setSurface = (surface: ClientSurface) => {
 
 export const getSurface = (): ClientSurface => currentSurface;
 
+// Which physical kiosk this is. Set by KioskLayout while the kiosk routes are
+// mounted; carried on every event alongside `surface` so venue-level analysis
+// ("which store's kiosk converts best?") is possible without a separate join.
+let kioskContext: { kiosk_id: string; venue: string } | null = null;
+
+export const setKioskContext = (context: { kiosk_id: string; venue: string } | null) => {
+  kioskContext = context;
+};
+
 // Every event goes through here so that `surface` cannot be forgotten on one call
 // site and silently break the cross-surface comparison the whole demo is built
 // around. Call this rather than the SDK's track directly.
 const track = (eventName: string, properties?: Record<string, any>) => {
-  amplitudeTrack(eventName, { surface: currentSurface, ...properties });
+  amplitudeTrack(eventName, { surface: currentSurface, ...(kioskContext ?? {}), ...properties });
 };
 
 // Track page views
@@ -222,16 +231,44 @@ export const trackUserSignup = (
   });
 };
 
-export const trackUserLogin = (loyaltyId: string, email: string) => {
+export const trackUserLogin = (
+  loyaltyId: string,
+  email: string,
+  loginMethod: 'demo_form' | 'loyalty_card_scan' = 'demo_form'
+) => {
   identifyLoyaltyMember(loyaltyId, {
     loyalty_id: loyaltyId,
-    email,
+    // A kiosk scan knows only the card, not the address; don't overwrite a real
+    // email property with an empty string.
+    ...(email ? { email } : {}),
     last_login: new Date().toISOString()
   });
 
   track('User Logged In', {
     loyalty_id: loyaltyId,
-    login_method: 'demo_form',
+    login_method: loginMethod,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// A loyalty card read at a kiosk. Distinct from 'User Logged In' so scan volume
+// is analysable even when the same member scans repeatedly.
+export const trackLoyaltyCardScanned = (loyaltyId: string) => {
+  track('Loyalty Card Scanned', {
+    loyalty_id: loyaltyId,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Cash fed into a kiosk. Deliberately not 'Deposit Made' — that event means a
+// card payment with brand/last-four; conflating them would corrupt the payment
+// mix analysis.
+export const trackCashInserted = (amount: number, balanceAfter: number) => {
+  track('Cash Inserted', {
+    amount,
+    currency: 'USD',
+    balance_after: balanceAfter,
+    payment_method: 'cash',
     timestamp: new Date().toISOString()
   });
 };
