@@ -1,178 +1,210 @@
 {
-  "generatedAt": "2026-07-27T22:22:42.635Z",
+  "generatedAt": "2026-08-10T18:43:33.463Z",
   "attribution": "AFL fixture data from the Squiggle API (https://api.squiggle.com.au/), used with an identifying User-Agent per its terms. Fetched at build time only — never from visitors’ browsers.",
   "events": [
     {
-      "id": "sq-38666",
-      "sportId": "afl",
-      "leagueId": "australian-rules",
-      "leagueName": "Australian Rules",
-      "homeTeam": "Collingwood",
-      "awayTeam": "Geelong",
-      "startTime": "7:30 PM",
-      "day": "Thursday",
-      "markets": 72,
-      "odds": {
-        "home": 2.12,
-        "away": 1.73,
-        "draw": 34
-      },
-      "venue": "M.C.G.",
-      "round": 21
-    },
-    {
-      "id": "sq-38673",
+      "id": "sq-38691",
       "sportId": "afl",
       "leagueId": "australian-rules",
       "leagueName": "Australian Rules",
       "homeTeam": "Fremantle",
-      "awayTeam": "Western Bulldogs",
+      "awayTeam": "Adelaide",
       "startTime": "8:10 PM",
       "day": "Friday",
       "markets": 72,
       "odds": {
-        "home": 1.16,
-        "away": 5.39,
+        "home": 1.24,
+        "away": 4.06,
         "draw": 34
       },
       "venue": "Perth Stadium",
-      "round": 21
+      "round": 23
     },
     {
-      "id": "sq-38671",
-      "sportId": "afl",
-      "leagueId": "australian-rules",
-      "leagueName": "Australian Rules",
-      "homeTeam": "St Kilda",
-      "awayTeam": "Sydney",
-      "startTime": "1:05 PM",
-      "day": "Saturday",
-      "markets": 72,
-      "odds": {
-        "home": 2.15,
-        "away": 1.71,
-        "draw": 34
-      },
-      "venue": "Docklands",
-      "round": 21
-    },
-    {
-      "id": "sq-38669",
-      "sportId": "afl",
-      "leagueId": "australian-rules",
-      "leagueName": "Australian Rules",
-      "homeTeam": "Hawthorn",
-      "awayTeam": "North Melbourne",
-      "startTime": "1:35 PM",
-      "day": "Saturday",
-      "markets": 72,
-      "odds": {
-        "home": 1.14,
-        "away": 5.81,
-        "draw": 34
-      },
-      "venue": "York Park",
-      "round": 21
-    },
-    {
-      "id": "sq-38672",
-      "sportId": "afl",
-      "leagueId": "australian-rules",
-      "leagueName": "Australian Rules",
-      "homeTeam": "Port Adelaide",
-      "awayTeam": "Greater Western Sydney",
-      "startTime": "6:35 PM",
-      "day": "Saturday",
-      "markets": 72,
-      "odds": {
-        "home": 1.54,
-        "away": 2.49,
-        "draw": 34
-      },
-      "venue": "Adelaide Oval",
-      "round": 21
-    },
-    {
-      "id": "sq-38665",
-      "sportId": "afl",
-      "leagueId": "australian-rules",
-      "leagueName": "Australian Rules",
-      "homeTeam": "Carlton",
-      "awayTeam": "Brisbane Lions",
-      "startTime": "7:40 PM",
-      "day": "Saturday",
-      "markets": 72,
-      "odds": {
-        "home": 2.48,
-        "away": 1.55,
-        "draw": 34
-      },
-      "venue": "Docklands",
-      "round": 21
-    },
-    {
-      "id": "sq-38670",
+      "id": "sq-38688",
       "sportId": "afl",
       "leagueId": "australian-rules",
       "leagueName": "Australian Rules",
       "homeTeam": "Richmond",
-      "awayTeam": "West Coast",
-      "startTime": "1:10 PM",
-      "day": "Sunday",
+      "awayTeam": "St Kilda",
+      "startTime": "12:35 PM",
+      "day": "Saturday",
       "markets": 72,
       "odds": {
-        "home": 1.98,
-        "away": 1.83,
+        "home": 3.93,
+        "away": 1.26,
         "draw": 34
       },
       "venue": "M.C.G.",
-      "round": 21
+      "round": 23
     },
     {
-      "id": "sq-38668",
+      "id": "sq-38687",
       "sportId": "afl",
       "leagueId": "australian-rules",
       "leagueName": "Australian Rules",
-      "homeTeam": "Gold Coast",
+      "homeTeam": "North Melbourne",
+      "awayTeam": "Geelong",
+      "startTime": "3:45 PM",
+      "day": "Saturday",
+      "markets": 72,
+      "odds": {
+        "home": 3.32,
+        "away": 1.33,
+        "draw": 34
+      },
+      "venue": "Docklands",
+      "round": 23
+    },
+    {
+      "id": "sq-38683",
+      "sportId": "afl",
+      "leagueId": "australian-rules",
+      "leagueName": "Australian Rules",
+      "homeTeam": "Brisbane Lions",
+      "awayTeam": "Gold Coast",
+      "startTime": "4:15 PM",
+      "day": "Saturday",
+      "markets": 72,
+      "odds": {
+        "home": 1.29,
+        "away": 3.67,
+        "draw": 34
+      },
+      "venue": "Gabba",
+      "round": 23
+    },
+    {
+      "id": "sq-38686",
+      "sportId": "afl",
+      "leagueId": "australian-rules",
+      "leagueName": "Australian Rules",
+      "homeTeam": "Hawthorn",
+      "awayTeam": "Collingwood",
+      "startTime": "7:40 PM",
+      "day": "Saturday",
+      "markets": 72,
+      "odds": {
+        "home": 1.53,
+        "away": 2.52,
+        "draw": 34
+      },
+      "venue": "M.C.G.",
+      "round": 23
+    },
+    {
+      "id": "sq-38690",
+      "sportId": "afl",
+      "leagueId": "australian-rules",
+      "leagueName": "Australian Rules",
+      "homeTeam": "Port Adelaide",
       "awayTeam": "Melbourne",
+      "startTime": "8:10 PM",
+      "day": "Saturday",
+      "markets": 72,
+      "odds": {
+        "home": 2,
+        "away": 1.82,
+        "draw": 34
+      },
+      "venue": "Adelaide Oval",
+      "round": 23
+    },
+    {
+      "id": "sq-38685",
+      "sportId": "afl",
+      "leagueId": "australian-rules",
+      "leagueName": "Australian Rules",
+      "homeTeam": "Greater Western Sydney",
+      "awayTeam": "West Coast",
+      "startTime": "1:40 PM",
+      "day": "Sunday",
+      "markets": 72,
+      "odds": {
+        "home": 1.15,
+        "away": 5.54,
+        "draw": 34
+      },
+      "venue": "Sydney Showground",
+      "round": 23
+    },
+    {
+      "id": "sq-38689",
+      "sportId": "afl",
+      "leagueId": "australian-rules",
+      "leagueName": "Australian Rules",
+      "homeTeam": "Western Bulldogs",
+      "awayTeam": "Carlton",
       "startTime": "3:15 PM",
       "day": "Sunday",
       "markets": 72,
       "odds": {
-        "home": 2.02,
-        "away": 1.81,
+        "home": 2.13,
+        "away": 1.72,
         "draw": 34
       },
-      "venue": "Carrara",
-      "round": 21
+      "venue": "Docklands",
+      "round": 23
     },
     {
-      "id": "sq-38667",
+      "id": "sq-38684",
       "sportId": "afl",
       "leagueId": "australian-rules",
       "leagueName": "Australian Rules",
       "homeTeam": "Essendon",
-      "awayTeam": "Adelaide",
+      "awayTeam": "Sydney",
       "startTime": "4:40 PM",
       "day": "Sunday",
       "markets": 72,
       "odds": {
-        "home": 4.22,
-        "away": 1.23,
+        "home": 9.26,
+        "away": 1.06,
         "draw": 34
       },
-      "venue": "Docklands",
-      "round": 21
+      "venue": "M.C.G.",
+      "round": 23
     },
     {
-      "id": "gen-nrl-20260728-0",
+      "id": "gen-nrl-20260810-0",
       "sportId": "nrl",
       "leagueId": "rugby-league",
       "leagueName": "Rugby League",
-      "homeTeam": "Brisbane Broncos",
-      "awayTeam": "Newcastle Knights",
-      "startTime": "1:00 PM",
-      "day": "Today",
+      "homeTeam": "Parramatta Eels",
+      "awayTeam": "Brisbane Broncos",
+      "startTime": "7:15 PM",
+      "day": "Wednesday",
+      "markets": 65,
+      "odds": {
+        "home": 1.71,
+        "away": 2.15,
+        "draw": null
+      }
+    },
+    {
+      "id": "gen-nrl-20260810-1",
+      "sportId": "nrl",
+      "leagueId": "rugby-league",
+      "leagueName": "Rugby League",
+      "homeTeam": "Newcastle Knights",
+      "awayTeam": "Cronulla Sharks",
+      "startTime": "7:30 PM",
+      "day": "Wednesday",
+      "markets": 65,
+      "odds": {
+        "home": 1.98,
+        "away": 1.83,
+        "draw": null
+      }
+    },
+    {
+      "id": "gen-nrl-20260810-2",
+      "sportId": "nrl",
+      "leagueId": "rugby-league",
+      "leagueName": "Rugby League",
+      "homeTeam": "South Sydney Rabbitohs",
+      "awayTeam": "Manly Sea Eagles",
+      "startTime": "5:00 PM",
+      "day": "Friday",
       "markets": 65,
       "odds": {
         "home": 2.08,
@@ -181,130 +213,98 @@
       }
     },
     {
-      "id": "gen-nrl-20260728-1",
-      "sportId": "nrl",
-      "leagueId": "rugby-league",
-      "leagueName": "Rugby League",
-      "homeTeam": "Parramatta Eels",
-      "awayTeam": "Manly Sea Eagles",
-      "startTime": "8:30 PM",
-      "day": "Friday",
-      "markets": 65,
-      "odds": {
-        "home": 1.61,
-        "away": 2.34,
-        "draw": null
-      }
-    },
-    {
-      "id": "gen-nrl-20260728-2",
-      "sportId": "nrl",
-      "leagueId": "rugby-league",
-      "leagueName": "Rugby League",
-      "homeTeam": "Cronulla Sharks",
-      "awayTeam": "South Sydney Rabbitohs",
-      "startTime": "1:30 PM",
-      "day": "Today",
-      "markets": 65,
-      "odds": {
-        "home": 1.63,
-        "away": 2.28,
-        "draw": null
-      }
-    },
-    {
-      "id": "gen-aflw-20260728-0",
+      "id": "gen-aflw-20260810-0",
       "sportId": "aflw",
       "leagueId": "afl-womens",
       "leagueName": "AFL Womens",
       "homeTeam": "Brisbane Women",
-      "awayTeam": "Melbourne Women",
-      "startTime": "12:45 PM",
-      "day": "Friday",
+      "awayTeam": "Fremantle Women",
+      "startTime": "8:00 PM",
+      "day": "Thursday",
       "markets": 55,
       "odds": {
-        "home": 2.56,
-        "away": 1.52,
+        "home": 1.57,
+        "away": 2.41,
         "draw": null
       }
     },
     {
-      "id": "gen-aflw-20260728-1",
+      "id": "gen-aflw-20260810-1",
       "sportId": "aflw",
       "leagueId": "afl-womens",
       "leagueName": "AFL Womens",
       "homeTeam": "Adelaide Women",
-      "awayTeam": "Fremantle Women",
-      "startTime": "6:30 PM",
-      "day": "Friday",
+      "awayTeam": "Melbourne Women",
+      "startTime": "7:15 PM",
+      "day": "Today",
       "markets": 55,
       "odds": {
-        "home": 2.21,
-        "away": 1.67,
+        "home": 2.7,
+        "away": 1.47,
         "draw": null
       }
     },
     {
-      "id": "gen-esports-20260728-0",
-      "sportId": "esports",
-      "leagueId": "lco-split-2",
-      "leagueName": "LCO Split 2",
-      "homeTeam": "Team Bliss",
-      "awayTeam": "Pentanet.GG",
-      "startTime": "3:30 PM",
-      "day": "Friday",
-      "markets": 14,
-      "odds": {
-        "home": 1.87,
-        "away": 1.95,
-        "draw": null
-      }
-    },
-    {
-      "id": "gen-esports-20260728-1",
+      "id": "gen-esports-20260810-0",
       "sportId": "esports",
       "leagueId": "lco-split-2",
       "leagueName": "LCO Split 2",
       "homeTeam": "Kanga Esports",
       "awayTeam": "Antic Esports",
-      "startTime": "8:00 PM",
-      "day": "Tomorrow",
+      "startTime": "2:30 PM",
+      "day": "Today",
       "markets": 14,
       "odds": {
-        "home": 1.52,
-        "away": 2.54,
+        "home": 1.66,
+        "away": 2.23,
         "draw": null
       }
     },
     {
-      "id": "gen-premier-league-20260728-0",
+      "id": "gen-esports-20260810-1",
+      "sportId": "esports",
+      "leagueId": "lco-split-2",
+      "leagueName": "LCO Split 2",
+      "homeTeam": "Pentanet.GG",
+      "awayTeam": "Team Bliss",
+      "startTime": "12:30 PM",
+      "day": "Wednesday",
+      "markets": 14,
+      "odds": {
+        "home": 2.67,
+        "away": 1.48,
+        "draw": null
+      }
+    },
+    {
+      "id": "gen-premier-league-20260810-0",
       "sportId": "premier-league",
       "leagueId": "premier-league",
       "leagueName": "Premier League",
       "homeTeam": "Arsenal",
-      "awayTeam": "Brighton",
-      "startTime": "7:45 PM",
-      "day": "Friday",
+      "awayTeam": "Newcastle United",
+      "startTime": "6:00 PM",
+      "day": "Today",
       "markets": 88,
       "odds": {
-        "home": 2.38,
-        "away": 1.59,
+        "home": 1.72,
+        "away": 2.14,
         "draw": 3.81
       }
     },
     {
-      "id": "gen-premier-league-20260728-1",
+      "id": "gen-premier-league-20260810-1",
       "sportId": "premier-league",
       "leagueId": "premier-league",
       "leagueName": "Premier League",
-      "homeTeam": "Newcastle United",
+      "homeTeam": "Brighton",
       "awayTeam": "Aston Villa",
-      "startTime": "3:45 PM",
-      "day": "Tomorrow",
+      "startTime": "2:30 PM",
+      "day": "Thursday",
       "markets": 88,
       "odds": {
-        "home": 1.85,
-        "away": 1.96,
+        "home": 1.7,
+        "away": 2.17,
         "draw": 3.81
       }
     }
